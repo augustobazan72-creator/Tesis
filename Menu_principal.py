@@ -127,4 +127,4 @@ if __name__ == '__main__':
         
         else:
             logger.info(f'Opcion {opcion} no valida, ingrese un valor entre [1-8].')
-            print(f'{'-'*80}')
+            print(f'{'-'*80}') 
