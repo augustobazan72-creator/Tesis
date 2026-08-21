@@ -594,7 +594,7 @@ def analisis_flujos(df_flujos: pd.DataFrame, interconexiones: dict, rta_esc: str
             continue
     # Generacion del DataFrame final
     df_res = pd.DataFrame(lista_res)
-    df_res.to_csv((Path(rta_esc)/'Reporte_escenarios_criticos_p2.csv'), index=False)
+    df_res.to_csv((Path(rta_esc)/'Reporte_escenarios_criticos_p2.csv'), index=False, encoding='utf-8')
     logger.info('El reporte de escenarios criticos (P2) se genero correctamente.')
     # Extraemos los escenarios para los diagramas
     lista_nombre = df_res['Interconexion'].to_list()

@@ -309,12 +309,27 @@ def menu_digsilent():
     print('[q] Salir.')
     while True:
         print(f'{'-'*80}')
-        opcion = input_log("Seleccione (1/2/3/q): ").strip().lower()
-        if opcion in ['1', '2', 'q']:
+        opcion = input_log("Seleccione (1/2/q): ").strip().lower()
+        if opcion in ['1', '2', '3', 'q']:
             print('='*80)
             return opcion
         else:
             logger.warning('Opcion no valida, seleccione una opcion entre [1/2/3/q].')
+
+def guia__archivo_pareo():
+    print('='*80)
+    print('CONFIGURACION DEL ARCHIVO DE PAREO')
+    print('='*80)
+    print('\nEl archivo debe subirse en formato excel.')
+    print('El archivo excel debe contar con 3 hojas: "Gen. Syn." - "Gen. Sta." - "Cargas"')
+    print('Los nombres de las hojas deben ser los mencionados anteriormente y estar en el mismo orden.')
+    print('Cada hoja debe contar con una primera columna "PF" y una segunda "SDDP" donde se relacione')
+    print('    el nombre en PowerFactory con el nombre SDDP.')
+    print('En el caso de la hoja de generadores sincronos "Gen. Syn." se debe contar con una tercera')
+    print('    columna llamada "P_min_MW" en donde se detalle la potencia minima de cada generador.')
+    print('Mediante la aopcion 3, puede obtener la informacion de nombres de generadores sincronos,')
+    print('    generadores estaticos y cargas.')
+    print('-'*80)
 
 def menu_escenarios():
     print(f'{'-'*80}\n')

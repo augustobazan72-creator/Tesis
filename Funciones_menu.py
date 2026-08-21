@@ -7,7 +7,7 @@ import logging
 import re
 from numpy import arange
 from Rutas import (carpetas_OP1, carpetas_OP2, carpetas_OP3_cep, carpetas_OP3_sep, carpetas_OP4, carpetas_OP5, carpetas_OP6_sep,
-                pedir_ruta, carpeta_existente)
+                pedir_ruta, carpeta_existente, carpetas_OP7)
 from Configuracion_inicial import config_estudio, config_estudio_2, cambiar_ubicacion_logger_txt, eliminar_carpeta, input_log
 from Motor_DC import (Configuracion_Simulacion, Configuracion_Simulacion_Contingencias, caso_base_completo,
                 contingencias_transmision, caso_base_escenarios, contingencias_op5)
@@ -22,7 +22,7 @@ from Lector_excels import lectura_excel_refuerzos, lectura_flujos, lectura_escen
 from Analisis_economico import costos
 from Menus import (menu_seleccion_yyyy, menu_seleccion_areas, menu_graficador, pedir_contingencias, pedir_contingencias_graficador,
                 graficador_contingencias_o_pip)
-from Exportacion_PF import cargar_escenario
+from Exportacion_PF import menu_vinculacion_pf
 
 # --- Configuracion logging ---
 logger = logging.getLogger(__name__)
@@ -448,9 +448,17 @@ def opcion_DC_6(nombre_bd, configuracion_estudio, rta_ctg_pip, rta_ctg_fp, df_ca
         else:
             return
 
-def opcion_DC_7(ruta_escenarios, net):
+def opcion_DC_7(ruta_estudio, ruta_escenarios, nombre_bd, ruta_carpeta_base, net, df_demanda, df_desp_TH, df_desp_ren):
+    # CONFIGURACION INICIAL
+    configuracion_estudio_6 = config_estudio("opcion_6", ruta_estudio)
+    cambiar_ubicacion_logger_txt((ruta_estudio), 'Reporte ejecucion 6.txt')
+    if not Path(ruta_estudio) == Path(ruta_carpeta_base):
+        eliminar_carpeta(ruta_carpeta_base)
+    # LECTURA DE ESCENARIOS
     df_p1, df_p2 = lectura_escenarios(ruta_escenarios)
     if df_p1.empty or df_p2.empty:
         e = 'Existe uno o ambos dataframe de escenario(s) vacio(s), por lo que no se mostraran los escenarios criticos'
         logger.warning(e)
-    cargar_escenario(df_p1, df_p2, ruta_escenarios, net)
+    # FUNCION
+    rta_par, rta_ac = carpetas_OP7(ruta_estudio, nombre_bd)
+    menu_vinculacion_pf(df_p1, df_p2, ruta_escenarios, rta_par, rta_ac, net, df_demanda, df_desp_TH, df_desp_ren)

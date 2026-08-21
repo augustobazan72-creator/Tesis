@@ -4,6 +4,7 @@ from pathlib import Path
 import logging
 import os
 import glob
+from Configuracion_inicial import input_log
 
 # --- Configuracion logging ---
 logger = logging.getLogger(__name__)
@@ -319,10 +320,10 @@ def lectura_escenarios(ruta_escenarios):
         df_p1 = pd.DataFrame()
     
     # ESCENARIOS CRITICOS P2
-    strings = ['Interconexion', 'Lectura']
+    strings = {'Interconexion' : str, 'Lectura' : str}
     encabezados = ['Interconexion', 'Lectura', 'Año', 'Etapa', 'Serie', 'Bloque']
     try:
-        df_p2 = pd.read_csv(escenarios_p2, usecols = encabezados)
+        df_p2 = pd.read_csv(escenarios_p2, usecols = encabezados, encoding = 'utf-8')
         df_p2['Escenarios criticos'] = df_p2['Interconexion'] +'_'+ df_p2['Lectura'] +'_'+ df_p2['Año'].astype(str)
         df_p2 = df_p2.astype(enteros)
         df_p2 = df_p2.astype(strings)
@@ -334,3 +335,36 @@ def lectura_escenarios(ruta_escenarios):
         df_p2 = pd.DataFrame()
     print(f'{'='*80}')
     return df_p1, df_p2
+
+def lector_pareo():
+    while True:
+        ruta = input_log('Ingrese la ruta del archivo. xlsx que continenel pareo:')
+        ruta = ruta.replace('"', '').replace("'", "")
+        if not Path(ruta).is_file():
+            e = 'La ruta ingresada no es un archivo, ingrese nuevamente la direccion del archivo.'
+            logger.warning(e)
+            print('-'*80)
+        else:
+            break
+    try:
+        pareo_syn = pd.read_excel(Path(ruta), sheet_name= "Gen. Syn.", dtype= str)
+        pareo_sta = pd.read_excel(Path(ruta), sheet_name= "Gen. Sta.", dtype= str)
+        pareo_cargas = pd.read_excel(Path(ruta), sheet_name= "Cargas", dtype= str)
+    except:
+        e_1 = 'Hubo un problema al leer las hojas del archivo excel.'
+        e_2 = 'Revise que el archivo sea un xslx, los nombres de las hojas y los encabezados.'
+        logger.error(e_1)
+        logger.info(e_2)
+        return pd.DataFrame(), pd.DataFrame(), pd.DataFrame()
+
+    # FUNCION DE LIMPIEZA
+    def funcion_limpieza(df):
+        df.columns = df.columns.str.strip()
+        for col in df.columns:
+            df[col] = df[col].str.strip()
+        return df
+    pareo_syn = funcion_limpieza(pareo_syn)
+    pareo_syn['P_min_MW'] = pareo_syn['P_min_MW'].astype(float)
+    pareo_sta = funcion_limpieza(pareo_sta)
+    pareo_cargas = funcion_limpieza(pareo_cargas)
+    return pareo_syn, pareo_sta, pareo_cargas
