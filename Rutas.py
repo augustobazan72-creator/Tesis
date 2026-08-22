@@ -275,11 +275,11 @@ def carpeta_existente(ruta_carpeta_base):
             print('-'*80)
 
 def ruta_escenarios_criticos ():
-    print('-'*80)
+    print('='*80)
     print('LECTURA DE ESCENARIOS CRITICOS')
     while True:
-        print('-'*80)
-        ruta_estudio = input_log('Ingrese la ruta de la carpeta donde se almaceno el estudio de escenarios criticos ["q" para volver al menu]:').strip()
+        print('='*80)
+        ruta_estudio = input_log('Ingrese la ruta de la carpeta donde se almaceno el estudio de escenarios criticos ["q" para volver al menu]:\n').strip()
         ruta_estudio = ruta_estudio.replace('"', '').replace("'", "")
         if ruta_estudio.lower() == 'q':
             return ""
@@ -287,13 +287,13 @@ def ruta_escenarios_criticos ():
             logger.info(f'La ruta: {ruta_estudio} existe.')
             try:
                 ruta_escenarios = Path(ruta_estudio)/'Op3_BD_LP_(Esc.Criticos)'/'1. Escenarios criticos'
-                print('-'*80)
+                print('='*80)
                 return Path(ruta_estudio), Path(ruta_escenarios)
             except:
                 logger.info('La carpeta de escenarios criticos no existe, porfavor realice el estudio o cambie de carpeta')
         else:
             logger.warning('Ingrese una ruta valida.')
-            print('-'*80)
+            print('='*80)
 
 def carpetas_OP7(ruta_carpeta_base: str | Path, nombre_bd : str):
     ruta_carpeta_base = Path(ruta_carpeta_base)

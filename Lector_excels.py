@@ -338,7 +338,7 @@ def lectura_escenarios(ruta_escenarios):
 
 def lector_pareo():
     while True:
-        ruta = input_log('Ingrese la ruta del archivo. xlsx que continenel pareo:')
+        ruta = input_log('Ingrese la ruta del archivo. xlsx que continenel pareo:\n')
         ruta = ruta.replace('"', '').replace("'", "")
         if not Path(ruta).is_file():
             e = 'La ruta ingresada no es un archivo, ingrese nuevamente la direccion del archivo.'
@@ -367,4 +367,5 @@ def lector_pareo():
     pareo_syn['P_min_MW'] = pareo_syn['P_min_MW'].astype(float)
     pareo_sta = funcion_limpieza(pareo_sta)
     pareo_cargas = funcion_limpieza(pareo_cargas)
+    print('='*80)
     return pareo_syn, pareo_sta, pareo_cargas
