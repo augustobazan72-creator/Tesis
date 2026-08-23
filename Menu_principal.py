@@ -119,7 +119,8 @@ if __name__ == '__main__':
                 logger.warning('Se saldra al menu.')
                 break
             else:
-                opcion_DC_7(ruta_estudio, ruta_escenarios, nombre_bd, ruta_carpeta_base, net, df_demanda, df_desp_TH, df_desp_ren)
+                opcion_DC_7(ruta_estudio, ruta_escenarios, nombre_bd, ruta_carpeta_base, net, df_demanda, df_desp_TH, df_desp_ren,
+                            Slacks)
         
         elif opcion == '8':
             print("\nCerrando el programa.")

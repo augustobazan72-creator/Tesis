@@ -448,7 +448,8 @@ def opcion_DC_6(nombre_bd, configuracion_estudio, rta_ctg_pip, rta_ctg_fp, df_ca
         else:
             return
 
-def opcion_DC_7(ruta_estudio, ruta_escenarios, nombre_bd, ruta_carpeta_base, net, df_demanda, df_desp_TH, df_desp_ren):
+def opcion_DC_7(ruta_estudio, ruta_escenarios, nombre_bd, ruta_carpeta_base, net, df_demanda, df_desp_TH, df_desp_ren,
+                Slacks):
     # CONFIGURACION INICIAL
     configuracion_estudio_6 = config_estudio("opcion_6", ruta_estudio)
     cambiar_ubicacion_logger_txt((ruta_estudio), 'Reporte ejecucion 7.txt')
@@ -461,4 +462,5 @@ def opcion_DC_7(ruta_estudio, ruta_escenarios, nombre_bd, ruta_carpeta_base, net
         logger.warning(e)
     # FUNCION
     rta_par, rta_ac = carpetas_OP7(ruta_estudio, nombre_bd)
-    menu_vinculacion_pf(df_p1, df_p2, ruta_escenarios, rta_par, rta_ac, net, df_demanda, df_desp_TH, df_desp_ren)
+    menu_vinculacion_pf(df_p1, df_p2, ruta_escenarios, rta_par, rta_ac, net, df_demanda, df_desp_TH, df_desp_ren,
+                        Slacks)
