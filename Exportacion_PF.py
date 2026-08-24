@@ -13,6 +13,9 @@ logging.basicConfig(
     format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
+# CONSTANTES
+U_INICIAL = 1.0 # pu
+
 def vinculacion_pf():
     print('='*80)
     print('Vinculacion con PowerFactory (DigSilent)')
@@ -254,30 +257,31 @@ def base_datos_pf(app):
         cargas_pf[i.loc_name] = i
     return generacion_sincrona, generadores_estaticos, cargas_pf
 
-def importar_demanda(escenario, pareo_cargas, df_demanda, cargas_pf, app):
+def importar_demanda(escenario, pareo_cargas, df_demanda, cargas_pf):
     print('DEMANDA\n')
     # IDENTIFICACMOS LAS CARGAS ACTIVAS EN EL CASO
     cargas = list(cargas_pf.keys())
     df_cargas_activas = pd.DataFrame(cargas, columns=['PF'])
+    # FILTRAMOS EL ESCENARIO (DESPACHO)
+    df_demanda = df_demanda.copy()
+    df_cargas = df_demanda.loc[[escenario]]
+    logger.info('Se filtaron las demandas (SDDP) segun el escenario.')
+    # ASIGNACION DE DEMANDAS POR CARGAS
     while True:
+        # FILTRAMOS LAS CARGAS ACTIVAS EN EL CASO DE ESTUDIO
         df_cargas_activas = pd.merge(df_cargas_activas, pareo_cargas, on='PF', how='left')
-        # REPARTIMOS LA DEMANDA POR CARGAS
-        df_demanda = df_demanda.copy()
-        df_cargas = df_demanda.loc[[escenario]]
         cargas_sddp = set(df_cargas_activas['SDDP'].tolist())
         demandas_pf = []
         for carga in list(cargas_sddp):
-            try:
-                df = df_cargas_activas[df_cargas_activas['SDDP'] == carga]
-                num_demandas = len(df)
-                demanda_sddp = float(df_cargas[carga].item())
-                demanda_pf = demanda_sddp / num_demandas
-                x = [carga, demanda_pf]
-                demandas_pf.append(x)
-            except:
-                continue
+            df = df_cargas_activas[df_cargas_activas['SDDP'] == carga]
+            num_demandas = len(df)
+            demanda_sddp = float(df_cargas[carga].item())
+            demanda_pf = demanda_sddp / num_demandas
+            x = [carga, demanda_pf]
+            demandas_pf.append(x)
         df_demandas_pf = pd.DataFrame(demandas_pf, columns = ['SDDP', 'MW_pf'])
         df_pareo = pd.merge(df_cargas_activas, df_demandas_pf, on = 'SDDP', how = 'left')
+        # IDENTIFICAMOS QUE NO HAYAN CARGAS SIN POTENCIA ASIGNADA
         hay_nulos = df_pareo['SDDP'].isna().any()
         if hay_nulos:
             indices_nulos = df_pareo[df_pareo['SDDP'].isna()].index.tolist()
@@ -301,38 +305,39 @@ def importar_demanda(escenario, pareo_cargas, df_demanda, cargas_pf, app):
             logger.info('Se actualizo correctamente el pareo de nombres')
             logger.info('No se olvide actualizar el archivo excel de pareo.')
         else: break
+    logger.info('Se repartio correectamente la demanda por barra (SDDP) entre las cargas asigandas a dicha barra (PF).')
+    # IMPORTAMOS LA DEMANDA A PF
     df_pareo.set_index(['PF'], inplace=True)
     for llave, valor in cargas_pf.items():
         p = df_pareo.at[llave, 'MW_pf']
         valor.SetAttribute('plini', float(p))
-    logger.info('Se cargo exitosamente la demanda SDDP a las cargas en PF')
+    logger.info('Se importo la demanda SDDP a las cargas en PF correctamente.')
     print('-'*80)
     return pareo_cargas
 
-def importar_gen_estatica(pareo_sta, gsta_pf, escenario, df_desp_ren, app):
+def importar_gen_estatica(pareo_sta, gsta_pf, escenario, df_desp_ren):
     print('GENERACION ESTATICA.\n')
     # IDENTIFICACMOS LOS GENERADORES ESTATICOS ACTIVOS EN EL CASO
     gen_sta = list(gsta_pf.keys())
     df_gen_sta_activa = pd.DataFrame(gen_sta, columns=['PF'])
+    df_despacho = df_desp_ren.copy()
+    df_despacho = df_despacho.loc[[escenario]]
+    logger.info('Se filtraron los despachos de centrales renovables (SDDP) segun el escenario.')
     while True:
+        # REPARTIMOS EL DESPACHO ESTATICO
         df_gen_sta_activa = pd.merge(df_gen_sta_activa, pareo_sta, on='PF', how='left')
-        # REPARTIMOS EL DESPACHO POR CENTRAL
-        df_despacho = df_desp_ren.copy()
-        df_despacho = df_despacho.loc[[escenario]]
         renovables_sddp = set(df_gen_sta_activa['SDDP'].tolist())
         despacho_renovables_pf = []
         for central in list(renovables_sddp):
-            try:
-                df = df_gen_sta_activa[df_gen_sta_activa['SDDP'] == central]
-                num_unidades = len(df)
-                despacho_sddp = float(df_despacho[central].item())
-                despacho_pf = despacho_sddp / num_unidades
-                x = [central, despacho_pf]
-                despacho_renovables_pf.append(x)
-            except:
-                continue
+            df = df_gen_sta_activa[df_gen_sta_activa['SDDP'] == central]
+            num_unidades = len(df)
+            despacho_sddp = float(df_despacho[central].item())
+            despacho_pf = despacho_sddp / num_unidades
+            x = [central, despacho_pf]
+            despacho_renovables_pf.append(x)
         df_despachos_pf = pd.DataFrame(despacho_renovables_pf, columns = ['SDDP', 'MW_pf'])
         pareo_gen_sta = pd.merge(df_gen_sta_activa, df_despachos_pf, on = 'SDDP', how = 'left')
+        # VERIFICAMOS QUE NO HAYAN NULOS
         hay_nulos = pareo_gen_sta['SDDP'].isna().any()
         if hay_nulos:
             indices_nulos = pareo_gen_sta[pareo_gen_sta['SDDP'].isna()].index.tolist()
@@ -356,15 +361,19 @@ def importar_gen_estatica(pareo_sta, gsta_pf, escenario, df_desp_ren, app):
             logger.info('Se actualizo correctamente el pareo de nombres')
             logger.info('No se olvide actualizar el archivo excel de pareo.')
         else: break
+    logger.info('Se repartio el despacho de centrales renovables (SDDP) entre generadores estaticos (PF) correctamente.')
     pareo_gen_sta.set_index(['PF'], inplace=True)
     for llave, valor in gsta_pf.items():
         p = pareo_gen_sta.at[llave, 'MW_pf']
+        valor.SetAttribute('usetp', U_INICIAL)
         if int(float(p)) == 0:
             valor.SetAttribute('outserv', 1)
         else:
             valor.SetAttribute('outserv', 0)
+            valor.SetAttribute('ip_ctrl', 0)
             valor.SetAttribute('pgini', float(p))
-    logger.info('Se cargo exitosamente los despachos de renovables SDDP a las unidades estaticas en PF.')
+    logger.info('Se cargo exitosamente los despachos de centrales renovables (SDDP) a las unidades estaticas (PF).')
+    logger.info(f'Se asigno tension inicial de {U_INICIAL} [p.u] a todas las uniudades estaticas.')
     print('-'*80)
     return pareo_sta
 
@@ -372,88 +381,67 @@ def despacho_por_unidad(df, despacho_sddp):
     df_inicial = df.copy()
     df_trabajo = df.copy()
     while True:
-        potencia_total = df_trabajo['P_mx_MW'].sum()
+        # IDENTIFICAMOS GENERADORES UNICOS (ASIGNAMOS TODO EL DESPACHO A ESA UNIDAD)
         if len(df_trabajo) == 1:
             df_trabajo['FPD'] = 1 # FPD (FACTOR DE PROPORCIONALIDAD DE DESPACHO)
             df_trabajo['Desp'] = df_trabajo['FPD'] * despacho_sddp
             df_trabajo['Optimo'] = True
             break
-        if potencia_total == 0 :
-            e = ('No se pudo repartir el despacho de forma correcta, se asignaran potencias que incumplen' + 
-            'el despacho optimo.')
-            logger.warning(e)
-            df_inicial['FPD'] = df_inicial['P_mx_MW']/potencia_total # FPD (FACTOR DE PROPORCIONALIDAD DE DESPACHO)
-            df_inicial['Desp'] = df_inicial['FPD'] * despacho_sddp
-            df_trabajo = df_inicial.copy()
+        # REPARTIMOS EL DESPACHO ENTRE LAS UNIDADES DISPONIBLES
+        potencia_total = df_trabajo['P_max_MW'].sum()
+        df_trabajo['FPD'] = df_trabajo['P_max_MW']/potencia_total # FPD (FACTOR DE PROPORCIONALIDAD DE DESPACHO)
+        df_trabajo['Desp'] = df_trabajo['FPD'] * despacho_sddp
+        df_trabajo['Optimo'] = (df_trabajo['Desp'] >= df_trabajo['P_min_MW']) & (df_trabajo['Desp'] <= df_trabajo['P_max_MW'])
+        incumple = (~df_trabajo['Optimo']).any()
+        if incumple == False:
             break
         else:
-            df_trabajo['FPD'] = df_trabajo['P_mx_MW']/potencia_total # FPD (FACTOR DE PROPORCIONALIDAD DE DESPACHO)
-            df_trabajo['Desp'] = df_trabajo['FPD'] * despacho_sddp
-            df_trabajo['Optimo'] = (df_trabajo['Desp'] >= df_trabajo['P_min_MW']) & (df_trabajo['Desp'] <= df_trabajo['P_mx_MW'])
-            incumple = (~df_trabajo['Optimo']).any()
-            if incumple == False:
-                break
-            else:
-                df_trabajo = df_trabajo.drop(df_trabajo['Desp'].idxmin())
-    df_trabajo = df_trabajo.drop(columns = ['SDDP', 'P_min_MW', 'P_mx_MW', 'Optimo', 'FPD'])
+            # SACAMOS DE SERVICIO EL GENERADOR QUE MENOS DESPACHO HACE
+            df_trabajo = df_trabajo.drop(df_trabajo['Desp'].idxmin())
+            df_trabajo.drop(columns = ['Optimo', 'FPD'], inplace = True)
+    #LIMPIAMOS EL DF TRABAJO
+    df_trabajo = df_trabajo.drop(columns = ['SDDP', 'P_min_MW', 'P_max_MW', 'Optimo', 'FPD'])
     df_final = pd.merge(df_inicial, df_trabajo, how= 'left', on = ['PF'])
     df_final['Desp'] = df_final['Desp'].fillna(0)
     return df_final
 
-"""
-Ya se aclaro el problema de la distribucion de despachos mediante el factor de proporcionalidad
-este si cumple con asignar los despachos respetando potencias maximas
-revisar el bucle iterativo para respetar las potencias minimas, las potencias maximas 
-deben de ser halladas aca dentro la funcion porque lo que falla es qeu si hallamos las potencias
-maximas con pareo_syn estan todos los generadores incluso los no activos en el caso de estudio
-por lo que el programa falla, debe filtrarse los elementos de pareo syn con los elelemntos activos y recien ahi
-hallar las potencias macximas
-#! REPLANTEAR BUCLE DE ASIGNACION DE DESPACHOS
-1. EL FACTOR DE PROPORCIONALIDAD SI ES BUENA IDEA YA QUE ASIGN DESPACHOS RESPETANDO EL Y DE FOMRA EQUIVALENTE
-2. LO IDEAL ES QUE LA MAQUINA DE MENOR POTENCIA DESPACHADA SE APAGUE PARA QUE EL REDESPACHO ENTRE LAS QUE SE
-    QUEDAN NO SE VEA TAN AFECTADO Y NO SUCEDA QUE 'potencia_total<despacho_sddp' LO CUAL GRACIAS A EL FACTOR 
-    DE PROPORCIONALIDAD SE RESPETA QUE LA UNIDAD DE MENOR POTENCIA SEA LA QUE MENOS DESPACHA
-3. VER FORMA DE INTEGRAR LA IDENTIFICACION DEL GENERADOR SLACK
-NO OLVIDAR:
-    - dentro el ciclo de asignacion de despachos primero desactivar que sean maquinas slacks
-    - las maquinas con despacho 0 deben ser apagadas
-    - EL SLACK EN SDDP ESLA CENTRAL, POR LO QUE PARA LA ASIGNACION DE LA MAQUINA DE REFERENCIA
-        DEBE SER LA MAQUINA QUE MAS HOLGURA TENGA ENTRE SU P_MAX Y EL DESPACHO QUE HACE, DE ESTA FORMA
-        SE ALIVIANA LAS POSIBLES DIFERENCIAS, VER LA FORMA DE ASIGNAR LA MAQUINA DE REFERENCIA A VARIAS 
-        UNIDADES PARA AUMENTAR LA HOLGURA Y FLEXIBILIDAD DEL SISTEMA DESPACHOS MAL ASIGNADOS 
-
-"""
-def importar_gen_sincrona(pareo_syn, gsyn_pf, escenario, df_desp_TH, Slacks, app):
+def importar_gen_sincrona(pareo_syn, gsyn_pf, escenario, df_desp_TH):
     print('GENERACION SINCRONA.\n')
-    # IDENTIFICACMOS LOS GENERADORES SINCRONOS ACTIVOS EN EL CASO
-    gen_syn = list(gsyn_pf.keys())
-    df_gen_syn_activa = pd.DataFrame(gen_syn, columns=['PF'])
-    print(pareo_syn)
+    # CREAMOS UN DF CON LAS P_MAX Y LOS NOMBRES (SOLO PARA LOS ELEMENTOS ACTIVOS EN EL CASO DE ESTUDIO)
+    datos_generadores = []
+    for llave, valor in gsyn_pf.items():
+        pmax = valor.GetAttribute('P_max')
+        datos_generadores.append([llave, pmax])
+    df_gen_syn_activa = pd.DataFrame(datos_generadores, columns = ['PF', 'P_max_MW'])
+    logger.info('Se recopilo la informacion de P_max [MW] de todas la unidades generadoras (PF)' +
+                    ' activas en el caso de estudio.')
+    # FILTRAMOS EL ESCENARIO E IDENTIFICAMOS LA CENTRAL SLACK
+    df_despacho = df_desp_TH.copy()
+    df_despacho = df_despacho.loc[[escenario]]
+    central_slack = df_despacho.idxmax(axis = 1).iloc[0]
+    logger.info('Se filtraron los despachos de centrales sincronas (SDDP) segun el escenario.')
     while True:
+        # PAREAMOS EN BASE AL ARCHIVO DE PAREO
         df_gen_syn_activa = pd.merge(df_gen_syn_activa, pareo_syn, on='PF', how='left')
         # REPARTIMOS EL DESPACHO POR CENTRAL
-        df_despacho = df_desp_TH.copy()
-        df_despacho = df_despacho.loc[[escenario]]
         sincronos_sddp = set(df_gen_syn_activa['SDDP'].tolist())
         lista_dfs_despachos = []
         for central in list(sincronos_sddp):
-            try:
-                df_aux = df_gen_syn_activa[df_gen_syn_activa['SDDP'] == central].copy()
-                despacho_sddp = float(df_despacho[central].item())
-                df = despacho_por_unidad(df_aux, despacho_sddp)
-                lista_dfs_despachos.append(df)
-            except:
-                continue
+            df_aux = df_gen_syn_activa[df_gen_syn_activa['SDDP'] == central].copy()
+            despacho_sddp = float(df_despacho[central].item())
+            df = despacho_por_unidad(df_aux, despacho_sddp)
+            lista_dfs_despachos.append(df)
         df_general = pd.concat(lista_dfs_despachos, ignore_index= True)
-        df_general.drop(columns = ['SDDP', 'P_min_MW', 'P_mx_MW'], inplace = True)
+        df_general.drop(columns = ['SDDP', 'P_min_MW', 'P_max_MW'], inplace = True)
         pareo_gen_syn = pd.merge(df_gen_syn_activa, df_general, on = 'PF', how = 'left')
+        # IDENTIFICAMOS GENERADORES QUE NO SE LES ASIGNO UN DESPACHO PERO QUE ESTEN ACTIVAS EN PF
         hay_nulos = pareo_gen_syn['Desp'].isna().any()
         if hay_nulos:
             indices_nulos = pareo_gen_syn[pareo_gen_syn['Desp'].isna()].index.tolist()
             logger.warning(f'Se detectaron: {len(indices_nulos)} despachos (PF) sin pareo SDDP.')
             logger.info('Se debe asignar el pareo correpondiente:')
             lista_no_pareados = pareo_gen_syn.loc[indices_nulos, 'PF'].tolist()
-            lista_p_max = pareo_gen_syn.loc[indices_nulos, 'P_mx_MW'].tolist()
+            lista_p_max = pareo_gen_syn.loc[indices_nulos, 'P_max_MW'].tolist()
             lista = list(zip(lista_no_pareados, lista_p_max))
             pareos_usuario = []
             for unidades_np, pmax in lista:
@@ -466,38 +454,48 @@ def importar_gen_sincrona(pareo_syn, gsyn_pf, escenario, df_desp_TH, Slacks, app
                         logger.warning('El pareo asignado no esta en la base de datos SDDP.')
                 x = [unidades_np, pareo, pmax, pmin]
                 pareos_usuario.append(x)
-            df_nuevos_pareos = pd.DataFrame(pareos_usuario, columns = pareo_sta.columns)
+            df_nuevos_pareos = pd.DataFrame(pareos_usuario, columns = pareo_syn.columns)
             pareo_syn = pd.concat([pareo_syn, df_nuevos_pareos], ignore_index=True)
             pareo_syn = pareo_syn.dropna(subset = ['SDDP'])
-            pareo_syn = pareo_syn[['PF', 'SDDP', 'P_min_MW', 'P_mx_MW']].copy()
+            pareo_syn = pareo_syn[['PF', 'SDDP', 'P_min_MW', 'P_max_MW']].copy()
             logger.info('Se actualizo correctamente el pareo de nombres')
             logger.info('No se olvide actualizar el archivo excel de pareo.')
         else: break
-    # DETERMINACION SLACK
-    nombre_slack = Slacks[escenario]
-    for gen in list(sincronos_sddp):
-        if gen == nombre_slack:
-            df = pareo_gen_syn[pareo_gen_syn['SDDP'] == gen]
-            df['Holgura_despacho'] = df['P_mx_MW'] - df['Desp']
-            idmx = df['Holgura_despacho'].idxmax()
-            nombre_maquina_ref = df.loc[idmx,'PF']
-            break
-        continue
+    logger.info('Se repartio el despacho de centrales sincronas (SDDP) entre generadores sincronos (PF) correctamente.')
+    # IDENTIFICACION DE MAQUINA SLACK
+    df_slack = pareo_gen_syn[pareo_gen_syn['SDDP'] == central_slack].copy()
+    df_slack['Holgura'] = df_slack['P_max_MW'] - df_slack['Desp']
+    maquina_slack = df_slack.loc[df_slack['Holgura'].idxmax(), 'PF']
+    logger.info(f'La maquina slack es: {maquina_slack}.')
+    # ASIGNACION DE DESPACHO
     pareo_gen_syn.set_index(['PF'], inplace=True)
-    print(pareo_gen_syn)
     for llave, valor in gsyn_pf.items():
-        p = pareo_gen_sta.at[llave, 'Desp']
-        valor.SetAttribute('ip_ctrl', 1)
+        p = pareo_gen_syn.at[llave, 'Desp']
+        valor.SetAttribute('ip_ctrl', 0)
+        valor.SetAttribute('usetp', U_INICIAL)
         if int(float(p)) == 0:
             valor.SetAttribute('outserv', 1)
         else:
             valor.SetAttribute('outserv', 0)
             valor.SetAttribute('pgini', float(p))
-            if llave == nombre_maquina_ref:
+            if llave == maquina_slack:
                 valor.SetAttribute('ip_ctrl', 1)
-    logger.info('Se cargo exitosamente los despachos sincronos SDDP a las unidades estaticas en PF.')
-    print('='*80)
+                valor.SetAttribute('usetp', 1)
+                valor.SetAttribute('phiini', 0)
+    logger.info('Se cargo exitosamente los despachos sincronos SDDP a las unidades sincronas en PF.')
+    logger.info(f'Se asigno tension inicial de {U_INICIAL} [p.u] a todas las uniudades sincronas que no son referencia.')
+    logger.info(f'Se asigno tension inicial de 1.0 [p.u] y angulo de 0° a la unidad de referencia.')
+    print('-'*80)
     return pareo_syn
+
+def ejecutar_flujo_AC(app):
+    print('EJECUCION FLUJO AC.\n')
+    app.ClearOutputWindow()
+    ldf =app.GetFromStudyCase('ComLdf')
+    ldf.iopt_net = 1
+    ldf.Execute()
+    logger.info('Se ejecuto el flujo de potencia en AC.')
+    print('='*80)
 
 def importar_escenarios(pareo_syn, pareo_sta, pareo_cargas, df_p1, df_p2, app, dir_proyecto, df_demanda, df_desp_TH, df_desp_ren,
                         Slacks):
@@ -508,9 +506,10 @@ def importar_escenarios(pareo_syn, pareo_sta, pareo_cargas, df_p1, df_p2, app, d
         print('='*80)
         print(f'IMPORTACION ESCENARIO.')
         print('='*80)
-        pareo_cargas = importar_demanda(escenario, pareo_cargas, df_demanda, cargas_pf, app)
-        pareo_sta = importar_gen_estatica(pareo_sta, gsta_pf, escenario, df_desp_ren, app)
-        pareo_syn = importar_gen_sincrona(pareo_syn, gsyn_pf, escenario, df_desp_TH, Slacks, app)
+        pareo_cargas = importar_demanda(escenario, pareo_cargas, df_demanda, cargas_pf)
+        pareo_sta = importar_gen_estatica(pareo_sta, gsta_pf, escenario, df_desp_ren)
+        pareo_syn = importar_gen_sincrona(pareo_syn, gsyn_pf, escenario, df_desp_TH)
+        ejecutar_flujo_AC(app)
         return False, pareo_cargas
     
     elif opcion == '2':

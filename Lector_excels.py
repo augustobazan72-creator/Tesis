@@ -338,7 +338,7 @@ def lectura_escenarios(ruta_escenarios):
 
 def lector_pareo():
     while True:
-        ruta = input_log('Ingrese la ruta del archivo. xlsx que continenel pareo:\n')
+        ruta = input_log('Ingrese la ruta del archivo ".xlsx" que continen el pareo (PF-SDDP):\n')
         ruta = ruta.replace('"', '').replace("'", "")
         if not Path(ruta).is_file():
             e = 'La ruta ingresada no es un archivo, ingrese nuevamente la direccion del archivo.'
