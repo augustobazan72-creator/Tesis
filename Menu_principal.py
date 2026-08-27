@@ -114,7 +114,7 @@ if __name__ == '__main__':
             print(f'\n{'='*80}')
             print("[DIGSILENT] Importar un escenario critico a DigSilent Power Factory (Flujos en DC).")
             print(f'{'='*80}')
-            ruta_estudio, ruta_escenarios = ruta_escenarios_criticos()
+            ruta_estudio, ruta_escenarios = ruta_escenarios_criticos(nombre_bd)
             if not ruta_estudio:
                 logger.warning('Se saldra al menu.')
                 break

@@ -523,7 +523,7 @@ def analisis_escenarios(df_desp_TH: pd.DataFrame, df_desp_ren: pd.DataFrame, df_
     lista_escenarios = list(zip(etapas, series, bloques, tiempo, escenarios_criticos))
     ruta_salida = Path(rta_esc) / 'Reporte_escenarios_criticos_p1.csv'
     logger.info('Reporte de escenarios criticos generado correctamente')
-    df_escenarios.to_csv(ruta_salida, index=False)
+    df_escenarios.to_csv(ruta_salida, index=False, encoding='utf-8')
     print(f"{'-'*80}")
     return rutas_anio, lista_escenarios, df_escenarios
 

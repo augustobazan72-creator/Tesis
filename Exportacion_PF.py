@@ -16,29 +16,20 @@ logger = logging.getLogger(__name__)
 # CONSTANTES
 U_INICIAL = 1.0 # pu
 
-def vinculacion_pf():
+def vinculacion_pf(configuracion_estudio_7):
     print('='*80)
     print('Vinculacion con PowerFactory (DigSilent)')
     print('='*80)
-    while True:
-        ruta_usuario = Path(input_log(f'Ingrese la ruta de DIgSIlent(Ej: ({r'C:\...\DIgSILENT\PowerFactory 2024\Python\3.12)'}):\n').strip())
-        if ruta_usuario.exists() and ruta_usuario.is_dir():
-            try: 
-                ruta_dig = ruta_usuario.parent
-                os.environ["PATH"] = rf'{str(ruta_dig)}'+';'+os.environ["PATH"]
-                sys.path.append(rf'{str(ruta_usuario)}')
-                import powerfactory as pf
-                app = pf.GetApplication()
-                app.Show()
-                logger.info('Se vinculo correctamente la API de DigSilent con el programa (Python).')
-                print(f'{'-'*80}')
-                return(app)
-            except:
-                logger.warning('Revise que la direccion copiada sea correcta.')
-                print(f'{'-'*80}')
-        else: 
-            logger.warning('La ruta debe ser una la direccion de la carpeta.')
-            print(f'{'-'*80}')
+    ruta_usuario = Path(configuracion_estudio_7['ruta_pf'])
+    ruta_dig = ruta_usuario.parent
+    os.environ["PATH"] = rf'{str(ruta_dig)}'+';'+os.environ["PATH"]
+    sys.path.append(rf'{str(ruta_usuario)}')
+    import powerfactory as pf
+    app = pf.GetApplication()
+    app.Show()
+    logger.info('Se vinculo correctamente la API de DigSilent con el programa (Python).')
+    print(f'{'-'*80}')
+    return(app)
 
 def adquisicion_bd_pf(app):
     # Seleccion base de datos
@@ -272,7 +263,7 @@ def importar_demanda(escenario, pareo_cargas, df_demanda, cargas_pf):
         df_cargas_activas = pd.merge(df_cargas_activas, pareo_cargas, on='PF', how='left')
         cargas_sddp = set(df_cargas_activas['SDDP'].tolist())
         demandas_pf = []
-        for carga in list(cargas_sddp):
+        for carga in list(cargas_sddp): # ! REVISAR ASIGNACION DE DEMANDAS
             df = df_cargas_activas[df_cargas_activas['SDDP'] == carga]
             num_demandas = len(df)
             demanda_sddp = float(df_cargas[carga].item())
@@ -368,6 +359,7 @@ def importar_gen_estatica(pareo_sta, gsta_pf, escenario, df_desp_ren):
         valor.SetAttribute('usetp', U_INICIAL)
         if int(float(p)) == 0:
             valor.SetAttribute('outserv', 1)
+            valor.SetAttribute('pgini', 0)
         else:
             valor.SetAttribute('outserv', 0)
             valor.SetAttribute('ip_ctrl', 0)
@@ -475,10 +467,12 @@ def importar_gen_sincrona(pareo_syn, gsyn_pf, escenario, df_desp_TH):
         valor.SetAttribute('usetp', U_INICIAL)
         if int(float(p)) == 0:
             valor.SetAttribute('outserv', 1)
+            valor.SetAttribute('pgini', 0)
         else:
             valor.SetAttribute('outserv', 0)
             valor.SetAttribute('pgini', float(p))
             if llave == maquina_slack:
+                valor.SetAttribute('pgini', 0)
                 valor.SetAttribute('ip_ctrl', 1)
                 valor.SetAttribute('usetp', 1)
                 valor.SetAttribute('phiini', 0)
@@ -495,6 +489,15 @@ def ejecutar_flujo_AC(app):
     ldf.iopt_net = 1
     ldf.Execute()
     logger.info('Se ejecuto el flujo de potencia en AC.')
+    print('='*80)
+
+def ejecutar_flujo_DC(app):
+    print('EJECUCION FLUJO DC.\n')
+    app.ClearOutputWindow()
+    ldf =app.GetFromStudyCase('ComLdf')
+    ldf.iopt_net = 2
+    ldf.Execute()
+    logger.info('Se ejecuto el flujo de potencia en DC.')
     print('='*80)
 
 def importar_escenarios(pareo_syn, pareo_sta, pareo_cargas, df_p1, df_p2, app, dir_proyecto, df_demanda, df_desp_TH, df_desp_ren,
@@ -514,10 +517,27 @@ def importar_escenarios(pareo_syn, pareo_sta, pareo_cargas, df_p1, df_p2, app, d
     
     elif opcion == '2':
         escenario = escenarios_disponibles(df_p2, 0)
+        gsyn_pf, gsta_pf, cargas_pf= base_datos_pf(app)
+        print('='*80)
+        print(f'IMPORTACION ESCENARIO.')
+        print('='*80)
+        pareo_cargas = importar_demanda(escenario, pareo_cargas, df_demanda, cargas_pf)
+        pareo_sta = importar_gen_estatica(pareo_sta, gsta_pf, escenario, df_desp_ren)
+        pareo_syn = importar_gen_sincrona(pareo_syn, gsyn_pf, escenario, df_desp_TH)
+        ejecutar_flujo_AC(app)
         return False, pareo_cargas
 
     elif opcion == '3':
         escenario = ingresar_escenario()
+        gsyn_pf, gsta_pf, cargas_pf= base_datos_pf(app)
+        print('='*80)
+        print(f'IMPORTACION ESCENARIO.')
+        print('='*80)
+        pareo_cargas = importar_demanda(escenario, pareo_cargas, df_demanda, cargas_pf)
+        pareo_sta = importar_gen_estatica(pareo_sta, gsta_pf, escenario, df_desp_ren)
+        pareo_syn = importar_gen_sincrona(pareo_syn, gsyn_pf, escenario, df_desp_TH)
+        ejecutar_flujo_DC(app)
+        return False, pareo_cargas
     elif opcion == '4':
         name_bd, name_ce = casos_estudio(app, dir_proyecto)
         if name_bd is None:
@@ -526,9 +546,10 @@ def importar_escenarios(pareo_syn, pareo_sta, pareo_cargas, df_p1, df_p2, app, d
     else:
         return True, pareo_cargas
 
-def menu_vinculacion_pf(df_p1, df_p2, ruta_escenarios, rta_par, rta_ac, net, df_demanda, df_desp_TH, df_desp_ren, Slacks):
+def menu_vinculacion_pf(df_p1, df_p2, ruta_escenarios, rta_par, rta_ac, net, df_demanda, df_desp_TH, df_desp_ren, Slacks,
+                        configuracion_estudio_7):
     # VINCULAMOS CON PF
-    app = vinculacion_pf()
+    app = vinculacion_pf(configuracion_estudio_7)
     dir_proyecto = adquisicion_bd_pf(app)
     # BUCLE MENU
     while True:

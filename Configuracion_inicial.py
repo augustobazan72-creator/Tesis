@@ -251,7 +251,11 @@ config_predeterminada = {
         "generar_graficas" : False,
         "reportes_cont_flujos" : True,
         "nucleos" : hilos_procesamiento(),
+    },
+        "opcion_7": {
+        "ruta_pf" : rf"C:\Program Files\DIgSILENT\PowerFactory 2024\Python\3.12",
     }
+    
 }
 
 def cargar_configuracion(ruta_config: str | Path) -> dict:

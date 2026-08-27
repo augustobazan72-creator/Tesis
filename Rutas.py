@@ -274,7 +274,7 @@ def carpeta_existente(ruta_carpeta_base):
             logger.warning('Opcion no valida, Seleccione entre: [S/N]')
             print('-'*80)
 
-def ruta_escenarios_criticos ():
+def ruta_escenarios_criticos (nombre_bd):
     print('='*80)
     print('LECTURA DE ESCENARIOS CRITICOS')
     while True:
@@ -286,7 +286,7 @@ def ruta_escenarios_criticos ():
         elif (Path(ruta_estudio).exists() and Path(ruta_estudio).is_dir()):
             logger.info(f'La ruta: {ruta_estudio} existe.')
             try:
-                ruta_escenarios = Path(ruta_estudio)/'Op3_BD_LP_(Esc.Criticos)'/'1. Escenarios criticos'
+                ruta_escenarios = Path(ruta_estudio)/f'Op3_{nombre_bd}_(Esc.Criticos)'/'1. Escenarios criticos'
                 print('='*80)
                 return Path(ruta_estudio), Path(ruta_escenarios)
             except:
