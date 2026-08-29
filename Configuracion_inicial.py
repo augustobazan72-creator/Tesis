@@ -210,7 +210,7 @@ config_predeterminada = {
         "nucleos" : hilos_procesamiento(),
         "generar_graficas" : True,
         "reportes_cont_flujos" : False,
-        "numero_refuerzos_automaticos": 7
+        "numero_refuerzos_automaticos": 11
     },
     "opcion_2": {
         "elementos_monitoreo" : 3,

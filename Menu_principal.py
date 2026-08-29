@@ -89,28 +89,8 @@ if __name__ == '__main__':
             # --- ANALISIS DE ESCENARIOS ---
             opcion_DC_3(df_flujos, rta_base, rta_esc, rta_infred, df_fechas, nombre_bd, net, df_mline, df_mtrafo,
                 df_demanda, df_desp_TH, df_desp_ren, Slacks, estudio_predetermindado)
-        
-        elif opcion == '4':
-            _ = opcion_DC_1(df_mtrafo, df_demanda, df_desp_TH, df_desp_ren, df_mline, df_fechas,
-                datos_estudio,  Slacks, df_duraci, ruta_carpeta_base, nombre_bd, False, parametros_red, net)
-        
-        elif opcion == '5':
-            opcion_DC_5(nombre_bd, ruta_carpeta_base, net, df_mline, df_mtrafo, df_demanda, df_desp_TH,df_desp_ren, Slacks,
-            datos_estudio, df_fechas, df_duraci)
-        
-        elif opcion == '6':
-            print(f'\n{'='*80}')
-            print("[GRAFICADOR] Generar graficas de flujos y cargabilidades de componentes.")
-            print(f'{'='*80}')  
-            ejecutar_flujos = estudio_previo_OP6()
-            dfs, rutas, configuracion_estudio = obtencion_flujos_6 (ejecutar_flujos, net, df_mline, df_mtrafo, df_demanda, df_desp_TH, df_desp_ren, Slacks,
-                                            datos_estudio, df_fechas, ruta_carpeta_base, nombre_bd, ruta_bd)
-            rta_ctg_pip, rta_ctg_fp = rutas
-            df_cargabilidades, df_flujos = dfs
-            opcion_DC_6(nombre_bd, configuracion_estudio, rta_ctg_pip, rta_ctg_fp, df_cargabilidades, df_flujos, net,
-                df_mline, df_mtrafo, df_demanda, df_desp_TH,df_desp_ren, Slacks, datos_estudio, df_fechas, df_duraci)
 
-        elif opcion == '7':
+        elif opcion == '4':
             print(f'\n{'='*80}')
             print("[DIGSILENT] Importar un escenario critico a DigSilent Power Factory (Flujos en DC).")
             print(f'{'='*80}')
@@ -122,6 +102,27 @@ if __name__ == '__main__':
                 opcion_DC_7(ruta_estudio, ruta_escenarios, nombre_bd, ruta_carpeta_base, net, df_demanda, df_desp_TH, df_desp_ren,
                             Slacks)
         
+
+        elif opcion == '5':
+            _ = opcion_DC_1(df_mtrafo, df_demanda, df_desp_TH, df_desp_ren, df_mline, df_fechas,
+                datos_estudio,  Slacks, df_duraci, ruta_carpeta_base, nombre_bd, False, parametros_red, net)
+        
+        elif opcion == '6':
+            opcion_DC_5(nombre_bd, ruta_carpeta_base, net, df_mline, df_mtrafo, df_demanda, df_desp_TH,df_desp_ren, Slacks,
+            datos_estudio, df_fechas, df_duraci)
+        
+        elif opcion == '7':
+            print(f'\n{'='*80}')
+            print("[GRAFICADOR] Generar graficas de flujos y cargabilidades de componentes.")
+            print(f'{'='*80}')  
+            ejecutar_flujos = estudio_previo_OP6()
+            dfs, rutas, configuracion_estudio = obtencion_flujos_6 (ejecutar_flujos, net, df_mline, df_mtrafo, df_demanda, df_desp_TH, df_desp_ren, Slacks,
+                                            datos_estudio, df_fechas, ruta_carpeta_base, nombre_bd, ruta_bd)
+            rta_ctg_pip, rta_ctg_fp = rutas
+            df_cargabilidades, df_flujos = dfs
+            opcion_DC_6(nombre_bd, configuracion_estudio, rta_ctg_pip, rta_ctg_fp, df_cargabilidades, df_flujos, net,
+                df_mline, df_mtrafo, df_demanda, df_desp_TH,df_desp_ren, Slacks, datos_estudio, df_fechas, df_duraci)
+
         elif opcion == '8':
             print("\nCerrando el programa.")
             sys.exit()

@@ -32,7 +32,7 @@ def crear_red():
             nombre="Bolivia"
             frecuencia=50.0
             S_base_mva=100.0
-            factor_potencia=0.95
+            factor_potencia=1
             fp_gen=0.85
             fp_sgen=0.95
             return cls(nombre = nombre, F_Hz = frecuencia, Sn_mva = S_base_mva, Fp = factor_potencia,

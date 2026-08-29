@@ -15,7 +15,8 @@ from Analisis_estadistico import analisis_caso_base, analisis_contingencias, ana
 from Red_pandapower import reporte_red, trafos_gen
 from Diagramas_cargabilidad import (graficador_op1, graficador_op3_p1, graficador_op3_p2, graficador_op5_rb, graficador_op5_ctg,
                                     graficador_condicion_n, graficador_contingencias, graficador_pip)
-from Resultados import grafica_elementos_criticos, resultados_diagnostico, resultados_refuerzos_propuestos, resultados_escenarios_criticos
+from Resultados import (grafica_elementos_criticos, resultados_diagnostico, resultados_refuerzos_propuestos, 
+                        resultados_escenarios_criticos, diagrama_elementos_criticos)
 from Refuerzos import analisis_ref_popuestos, ruta_refuerzos_usuario, refuerzos_usuario
 from Procesamiento_bd import distancias_lineas
 from Lector_excels import lectura_excel_refuerzos, lectura_flujos, lectura_escenarios
@@ -84,6 +85,8 @@ def opcion_DC_1(df_mtrafo: df, df_demanda: df, df_desp_TH: df, df_desp_ren: df, 
     # --- GENERADOR DE DIAGRAMAS PARA CONTINGENCIAS MAS SEVERAS ---
     graficador_op1 (net, df_mline, df_mtrafo, df_demanda,df_desp_TH, df_desp_ren, Slacks,
                         top_contingencias, rta_ctg_dgm)
+    diagrama_elementos_criticos(net, analisis_componentes, ranking_contingencias,
+                                df_mtrafo, df_mline, nombre_estudio, ruta_base)
 
     # --- ANALISIS DE REFUERZOS PROPUESTOS POR EL PROGRAMA ---
     if diagnostico:
