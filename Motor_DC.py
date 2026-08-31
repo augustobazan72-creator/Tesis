@@ -987,7 +987,7 @@ def contingencias_op5(escenarios, contingencias, config_sim_contingencias, net, 
                                     rta_ctg_pip, df_duraci, nucleos, reportes_cont_flujos)
         print(f"{'='*80}")
     else:
-        config_sim_contingencias.configurar_modo_2(escenarios, contingencias, datos_estudio, net)
+        config_sim_contingencias.configurar_modo_1(escenarios, contingencias, datos_estudio, net)
         simular_escenarios_contingencias_especificos(config_sim_contingencias, net, df_mline, df_mtrafo,
                                         df_demanda, df_desp_TH, df_desp_ren, Slacks, 
                                         df_fechas, rta_ctg_fp, nucleos, reportes_cont_flujos)

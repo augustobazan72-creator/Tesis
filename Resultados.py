@@ -5,7 +5,7 @@ from pathlib import Path
 import logging
 import pandas as pd
 from pandapower.plotting.plotly.traces import (create_bus_trace, create_line_trace, create_trafo_trace,
-                    create_weighted_marker_trace, draw_traces)
+                    draw_traces)
 
 # --- Configuracion logging ---
 logger = logging.getLogger(__name__)
@@ -38,7 +38,7 @@ def grafica_elementos_criticos(df_analisis, rta_cn):
     barras_p5 = ax.bar(x + ancho_barra, p5, ancho_barra, label='P_5%')
     ax.set_ylim(0, max(p0.max(), p1.max(), p5.max()) + 10)
     ax.set_xticks(x)
-    ax.set_xticklabels(componentes, rotation=45, ha='right')
+    ax.set_xticklabels(componentes, rotation=45, ha='right', labelsize = 7)
     ax.set_xlabel('Ranking de componentes críticos')
     ax.set_ylabel('Cargabilidad [%]')
     ax.legend()
@@ -50,6 +50,7 @@ def grafica_elementos_criticos(df_analisis, rta_cn):
         ylabel='Cargabilidad [%]'
     )
     plt.tight_layout()
+    plt.tick_params(axis='both', labelsize=7)
     plt.savefig(rta_cn / f"{nombre}.png", dpi=DPI)
     plt.close()
 

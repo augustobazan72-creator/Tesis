@@ -88,9 +88,7 @@ def actualizar_costos(df_costos_ind: pd.DataFrame, df_costos_reactores: pd.DataF
             else:
                 try:
                     factor_dol = float(factor_dol)
-                    if factor_dol > 0:
-                        continue
-                    else: 
+                    if not factor_dol > 0:
                         logger.warning("El factor no puede ser negativo. Usando valor por defecto.")
                         factor_dol = FACTOR_DOLAR
                 except ValueError:
@@ -102,9 +100,7 @@ def actualizar_costos(df_costos_ind: pd.DataFrame, df_costos_reactores: pd.DataF
             else:
                 try:
                     factor_infl = float(factor_infl)
-                    if factor_infl > 0:
-                        continue
-                    else: 
+                    if  not factor_infl > 0:
                         logger.warning("El factor no puede ser negativo. Usando valor por defecto.")
                         factor_infl = FACTOR_INFLACION
                 except ValueError:

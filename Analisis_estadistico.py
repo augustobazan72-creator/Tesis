@@ -173,7 +173,7 @@ def graficas(df_slice_result, df_duraci, componente, ruta_graficas, post_analisi
     ax.set_xlabel('Flujo [MW]')
     ax.set_ylabel('Cantidad de Registros (Conteo)')
     ax.grid(True, color='#dddddd', linewidth=0.7, linestyle='-')
-    ax.tick_params(axis = 'both', labelsize = 7)
+    ax.tick_params(axis = 'both', labelsize = 6)
     ax.set_axisbelow(True)
     plt.tight_layout()
     plt.savefig(f"{ruta_graficas}/{Nombre}_G4.png", dpi=DPI)

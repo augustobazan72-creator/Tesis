@@ -254,7 +254,7 @@ def pedir_contingencias(net):
         llave_contingencias = True
         logger.info(f'Se cargaran todas las contingencias.')
     print(f'{'='*80}')
-    return contingencias, llave_contingencias
+    return list(contingencias), llave_contingencias
 
 def pedir_contingencias_graficador(net):
     while True:

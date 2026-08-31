@@ -198,7 +198,7 @@ generar_graficas Para graficas de por elemento critico identificado
 
 # --- Nucleos para el multiprocessing ---
 def hilos_procesamiento ():
-    nucleos = min(18, max(4, int(cpu_count()*0.75)))
+    nucleos = min(18, max(4, int(cpu_count()/2)))
     return nucleos
 
 config_predeterminada = {

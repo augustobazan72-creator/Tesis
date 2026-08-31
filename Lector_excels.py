@@ -307,34 +307,31 @@ def lectura_escenarios(ruta_escenarios):
     # PARA LA NORMLIZACION DE COLUMNAS
     enteros = {'Etapa': int, 'Serie': int, 'Bloque': int, 'Año': int}
     # ESCENARIOS CRITICOS P1
-    #try:
-    encabezados = ['Escenarios criticos', 'Etapa', 'Serie', 'Bloque', 'MW', 'Año']
-    df_p1 = pd.read_csv(escenarios_p1, usecols = encabezados, encoding = 'utf-8')
-    df_p1 = df_p1.astype(enteros)
-    df_p1['Escenarios criticos'] = df_p1['Escenarios criticos'].astype(str)
-    logger.info('Se leyo correctamente el archivo "Reporte_escenarios_criticos_p1.csv".')
-    # except:
-    """
+    try:
+        encabezados = ['Escenarios criticos', 'Etapa', 'Serie', 'Bloque', 'MW', 'Año']
+        df_p1 = pd.read_csv(escenarios_p1, usecols = encabezados, encoding = 'utf-8')
+        df_p1 = df_p1.astype(enteros)
+        df_p1['Escenarios criticos'] = df_p1['Escenarios criticos'].astype(str)
+        logger.info('Se leyo correctamente el archivo "Reporte_escenarios_criticos_p1.csv".')
+    except:
         logger.warning('No se leyo correctamente el archivo "Reporte_escenarios_criticos_p1.csv".')
         logger.info('Revise que se haya ingresado una carpeta con el analisis de escenarios criticos ' + 
                     'realizado correctamente.')
         df_p1 = pd.DataFrame()
-    """
     # ESCENARIOS CRITICOS P2
     strings = {'Interconexion' : str, 'Lectura' : str}
     encabezados = ['Interconexion', 'Lectura', 'Año', 'Etapa', 'Serie', 'Bloque']
-    # try:
-    df_p2 = pd.read_csv(escenarios_p2, usecols = encabezados, encoding = 'utf-8')
-    df_p2['Escenarios criticos'] = df_p2['Interconexion'] +'_'+ df_p2['Lectura'] +'_'+ df_p2['Año'].astype(str)
-    df_p2 = df_p2.astype(enteros)
-    df_p2 = df_p2.astype(strings)
-    logger.info('Se leyo correctamente el archivo "Reporte_escenarios_criticos_p2.csv".')
-    """    except:
+    try:
+        df_p2 = pd.read_csv(escenarios_p2, usecols = encabezados, encoding = 'utf-8')
+        df_p2['Escenarios criticos'] = df_p2['Interconexion'] +'_'+ df_p2['Lectura'] +'_'+ df_p2['Año'].astype(str)
+        df_p2 = df_p2.astype(enteros)
+        df_p2 = df_p2.astype(strings)
+        logger.info('Se leyo correctamente el archivo "Reporte_escenarios_criticos_p2.csv".')
+    except:
         logger.warning('No se leyo correctamente el archivo "Reporte_escenarios_criticos_p2.csv".')
         logger.info('Revise que se haya ingresado una carpeta con el analisis de escenarios criticos' + 
                     'realizado correctamente.')
         df_p2 = pd.DataFrame()
-    """
     print(f'{'='*80}')
     return df_p1, df_p2
 
