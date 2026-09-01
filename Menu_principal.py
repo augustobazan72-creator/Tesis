@@ -62,7 +62,7 @@ if __name__ == '__main__':
             realizar_diagnostico = estudio_previo_OP2()
             if realizar_diagnostico:
                 ruta_diagnostico = opcion_DC_1(df_mtrafo, df_demanda, df_desp_TH, df_desp_ren, df_mline, df_fechas,
-                datos_estudio,  Slacks, df_duraci, ruta_carpeta_base, nombre_bd, parametros_red, net)
+                datos_estudio,  Slacks, df_duraci, ruta_carpeta_base, nombre_bd, False, parametros_red, net)
             else:
                 ruta_diagnostico = pedir_ruta(ruta_bd)
                 cambiar_ubicacion_logger_txt(ruta_diagnostico, 'Reporte ejecucion 2.txt')

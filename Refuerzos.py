@@ -603,7 +603,7 @@ def elementos_monitoreo_alternativas(df_cargabilidades_base: pd.DataFrame, df_ca
     if lista_monitoreo:
         logger.info(f'Los {n_elementos} elementos de monitoreo mas la lista de elementos de monitoreo decalarados en'+
                     f'\nexcel para {nombre} son:\n{elementos_sensibles}')
-        elementos_sensibles.append(lista_monitoreo)
+        elementos_sensibles.extend(lista_monitoreo)
         return list(set(elementos_sensibles))
     logger.info(f'Los {n_elementos} elementos de monitoreo para {nombre} son:\n{elementos_sensibles}')
     return elementos_sensibles

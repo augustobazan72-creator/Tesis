@@ -38,7 +38,7 @@ def grafica_elementos_criticos(df_analisis, rta_cn):
     barras_p5 = ax.bar(x + ancho_barra, p5, ancho_barra, label='P_5%')
     ax.set_ylim(0, max(p0.max(), p1.max(), p5.max()) + 10)
     ax.set_xticks(x)
-    ax.set_xticklabels(componentes, rotation=45, ha='right', labelsize = 7)
+    ax.set_xticklabels(componentes, rotation=45, ha='right')
     ax.set_xlabel('Ranking de componentes críticos')
     ax.set_ylabel('Cargabilidad [%]')
     ax.legend()
@@ -187,8 +187,8 @@ def diagrama_elementos_criticos(net, analisis_componentes: pd.DataFrame, ranking
     all_traces = (bus_trace if isinstance(bus_trace, list) else _flatten(bus_trace)) \
                 + line_traces + trafo_traces + markers_lcrit + markers_tcrit
     fig = draw_traces(all_traces, on_map=True, map_style='light', auto_open=False,
-                    filename=f"Diagrama_tensiones_{nombre_estudio}.html", figsize=1.5, showlegend=True)
-    ruta = Path(ruta_base) / f"Diagrama_tensiones_{nombre_estudio}.html"
+                    filename=f"Diagrama_elementos_criticos_{nombre_estudio}.html", figsize=1.5, showlegend=True)
+    ruta = Path(ruta_base) / f"Diagrama_elementos_criticos_{nombre_estudio}.html"
     fig.write_html(ruta)
     logger.info('Se genero correctamnte el diagrama del sistema.')
     print('='*80)
