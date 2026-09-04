@@ -98,7 +98,8 @@ def resultados_diagnostico(analisis_componentes: pd.DataFrame, ranking_contingen
         return ruta_base
 
 def diagrama_elementos_criticos(net, analisis_componentes: pd.DataFrame, ranking_contingencias: pd.DataFrame,
-                                df_mtrafo: pd.DataFrame, df_mline: pd.DataFrame, nombre_estudio, ruta_base):
+                                df_mtrafo: pd.DataFrame, df_mline: pd.DataFrame, nombre_estudio, ruta_base, 
+                                ind_sev_base):
     print('='*80)
     print('DIAGRAMA DEL SISTEMA')
     print('='*80)
@@ -153,18 +154,19 @@ def diagrama_elementos_criticos(net, analisis_componentes: pd.DataFrame, ranking
     for color_val, grupo in df_trafo_color.groupby("color"):
         tension = u_colores.get(color_val, 'Otras tensiones.')
         trace = create_trafo_trace(net, trafos=grupo["idx"].tolist(), width=5, color=color_val,
-            trace_name=f"U_nom (HV) trafos {tension} [KV]")
+            trace_name=f"U_nom[HV]{tension} [KV]")
         trafo_traces.extend(_flatten(trace))
 
     # PREPARACION DE ELEMENTOS CRITICOS
-    df1 = analisis_componentes[analisis_componentes['P_1%'] >= 90].copy()
-    df2 = ranking_contingencias[ranking_contingencias['Ind_Sev'] > 1].copy()
+    df1 = analisis_componentes[analisis_componentes['P_1%'] > 100].copy()
+    df2 = ranking_contingencias[ranking_contingencias['Ind_Sev'] > ind_sev_base].copy()
+    trafos_net = net.trafo['name'].tolist()
     lista_elementos_criticos = list(set(df1['Nombre_Componente'].tolist() + df2['Contingencia'].tolist()))
     logger.info(f'Se identificaron: {len(lista_elementos_criticos)} elementos criticos, entre el analisis en condicion "n" y "n-1".')
     lineas = []
     trafos = []
     for elemento in lista_elementos_criticos:
-        if elemento[:3] == elemento[6:9]:
+        if elemento in trafos_net:
             id_t = df_trafo[df_trafo['name'] == elemento].index[0]
             trafos.append(id_t)
         else:

@@ -11,13 +11,13 @@ from Rutas import (carpetas_OP1, carpetas_OP2, carpetas_OP3_cep, carpetas_OP3_se
 from Configuracion_inicial import config_estudio, config_estudio_2, cambiar_ubicacion_logger_txt, eliminar_carpeta, input_log
 from Motor_DC import (Configuracion_Simulacion, Configuracion_Simulacion_Contingencias, caso_base_completo,
                 contingencias_transmision, caso_base_escenarios, contingencias_op5)
-from Analisis_estadistico import analisis_caso_base, analisis_contingencias, analisis_escenarios, analisis_flujos
+from Analisis_estadistico import (analisis_caso_base, analisis_contingencias, analisis_escenarios, analisis_flujos, indice_cond_n)
 from Red_pandapower import reporte_red, trafos_gen
 from Diagramas_cargabilidad import (graficador_op1, graficador_op3_p1, graficador_op3_p2, graficador_op5_rb, graficador_op5_ctg,
                                     graficador_condicion_n, graficador_contingencias, graficador_pip)
 from Resultados import (grafica_elementos_criticos, resultados_diagnostico, resultados_refuerzos_propuestos, 
                         resultados_escenarios_criticos, diagrama_elementos_criticos)
-from Refuerzos import analisis_ref_popuestos, ruta_refuerzos_usuario, refuerzos_usuario
+from Refuerzos import analisis_ref_popuestos, ruta_refuerzos_usuario, refuerzos_usuario, constantes
 from Procesamiento_bd import distancias_lineas
 from Lector_excels import lectura_excel_refuerzos, lectura_flujos, lectura_escenarios
 from Analisis_economico import costos
@@ -68,6 +68,9 @@ def opcion_DC_1(df_mtrafo: df, df_demanda: df, df_desp_TH: df, df_desp_ren: df, 
     analisis_componentes = analisis_caso_base (df_cargabilidades, df_flujos, df_duraci,
             net, datos_estudio, parametros_red, rta_cn, configuracion_estudio['generar_graficas'],
             rta_cn_graf, nucleos, trafos_limpios)
+    horas_serie = constantes(df_duraci, datos_estudio['numero_etapas'])
+    indice_red_base = indice_cond_n(df_cargabilidades, df_duraci, configuracion_estudio['exponente_n'], horas_serie)
+    ind_sev, numero_violaciones = indice_red_base
     
     # --- ANALISIS CONDICION N-1 (CONTINGENCIAS) ---
     indice_severidad = contingencias_transmision(configuracion_contingencias, net, df_mline, df_mtrafo, 
@@ -86,7 +89,7 @@ def opcion_DC_1(df_mtrafo: df, df_demanda: df, df_desp_TH: df, df_desp_ren: df, 
     graficador_op1 (net, df_mline, df_mtrafo, df_demanda,df_desp_TH, df_desp_ren, Slacks,
                         top_contingencias, rta_ctg_dgm)
     diagrama_elementos_criticos(net, analisis_componentes, ranking_contingencias,
-                                df_mtrafo, df_mline, nombre_estudio, ruta_base)
+                                df_mtrafo, df_mline, nombre_estudio, ruta_base, ind_sev)
 
     # --- ANALISIS DE REFUERZOS PROPUESTOS POR EL PROGRAMA ---
     if diagnostico:

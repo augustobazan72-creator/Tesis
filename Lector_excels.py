@@ -348,7 +348,7 @@ def lector_pareo():
     try:
         pareo_syn = pd.read_excel(Path(ruta), sheet_name= "Gen. Syn.", dtype= str)
         pareo_sta = pd.read_excel(Path(ruta), sheet_name= "Gen. Sta.", dtype= str)
-        pareo_cargas = pd.read_excel(Path(ruta), sheet_name= "Cargas", dtype= str)
+        pareo_cargas = pd.read_excel(Path(ruta), sheet_name= "Cargas.", dtype= str)
     except:
         e_1 = 'Hubo un problema al leer las hojas del archivo excel.'
         e_2 = 'Revise que el archivo sea un xslx, los nombres de las hojas y los encabezados.'
