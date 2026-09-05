@@ -98,13 +98,12 @@ def resultados_diagnostico(analisis_componentes: pd.DataFrame, ranking_contingen
         return ruta_base
 
 def diagrama_elementos_criticos(net, analisis_componentes: pd.DataFrame, ranking_contingencias: pd.DataFrame,
-                                df_mtrafo: pd.DataFrame, df_mline: pd.DataFrame, nombre_estudio, ruta_base, 
-                                ind_sev_base):
+                                df_mtrafo: pd.DataFrame, df_mline: pd.DataFrame, nombre_estudio, ruta_base):
     print('='*80)
     print('DIAGRAMA DEL SISTEMA')
     print('='*80)
     if net.bus_geodata.empty:
-        logger.info('La red no cuenta con coordenadas por lo que no se generara el diagrama.')
+        logger.warning('La red no cuenta con coordenadas por lo que no se generara el diagrama.')
         return
     # FUNCION AUX
     def _flatten(item):
@@ -157,12 +156,22 @@ def diagrama_elementos_criticos(net, analisis_componentes: pd.DataFrame, ranking
             trace_name=f"U_nom[HV]{tension} [KV]")
         trafo_traces.extend(_flatten(trace))
 
-    # PREPARACION DE ELEMENTOS CRITICOS
+    # PREPARACION ELEMENTOS CRITICOS CONDICION N 
     df1 = analisis_componentes[analisis_componentes['P_1%'] > 100].copy()
-    df2 = ranking_contingencias[ranking_contingencias['Ind_Sev'] > ind_sev_base].copy()
+    criticos_condicion_n = df1['Nombre_Componente'].tolist()
+    logger.info(f'Se identificaron [{len(criticos_condicion_n)}] elementos criticos en condicion "n".')
+    # PREPARACION ELEMENTOS CRITICOS CONTINGENCIAS 
+    indices = np.sort(ranking_contingencias['Ind_Sev'].values)
+    quartil_1 = np.percentile(indices, 25)
+    quartil_3 = np.percentile(indices, 75)
+    indice_ref = quartil_3 + 1.5 * (quartil_3-quartil_1)
+    df2 = ranking_contingencias[ranking_contingencias['Ind_Sev'] > indice_ref].copy()
+    criticos_contingencias = df2['Contingencia'].tolist()
+    logger.info(f'El indice de severidad de referencia es: {indice_ref}')
+    logger.info(f'Se identificaron [{len(criticos_contingencias)}] contingencias criticas.')
     trafos_net = net.trafo['name'].tolist()
-    lista_elementos_criticos = list(set(df1['Nombre_Componente'].tolist() + df2['Contingencia'].tolist()))
-    logger.info(f'Se identificaron: {len(lista_elementos_criticos)} elementos criticos, entre el analisis en condicion "n" y "n-1".')
+    lista_elementos_criticos = list(set(criticos_condicion_n + criticos_contingencias))
+    logger.info(f'Se identificaron: {len(lista_elementos_criticos)} elementos criticos en total.')
     lineas = []
     trafos = []
     for elemento in lista_elementos_criticos:
@@ -188,7 +197,7 @@ def diagrama_elementos_criticos(net, analisis_componentes: pd.DataFrame, ranking
     # GRAFICAMOS
     all_traces = (bus_trace if isinstance(bus_trace, list) else _flatten(bus_trace)) \
                 + line_traces + trafo_traces + markers_lcrit + markers_tcrit
-    fig = draw_traces(all_traces, on_map=True, map_style='light', auto_open=False,
+    fig = draw_traces(all_traces, on_map=True, map_style='basic', auto_open=False,
                     filename=f"Diagrama_elementos_criticos_{nombre_estudio}.html", figsize=1.5, showlegend=True)
     ruta = Path(ruta_base) / f"Diagrama_elementos_criticos_{nombre_estudio}.html"
     fig.write_html(ruta)

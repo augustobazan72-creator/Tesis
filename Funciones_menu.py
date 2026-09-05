@@ -68,9 +68,7 @@ def opcion_DC_1(df_mtrafo: df, df_demanda: df, df_desp_TH: df, df_desp_ren: df, 
     analisis_componentes = analisis_caso_base (df_cargabilidades, df_flujos, df_duraci,
             net, datos_estudio, parametros_red, rta_cn, configuracion_estudio['generar_graficas'],
             rta_cn_graf, nucleos, trafos_limpios)
-    horas_serie = constantes(df_duraci, datos_estudio['numero_etapas'])
-    indice_red_base = indice_cond_n(df_cargabilidades, df_duraci, configuracion_estudio['exponente_n'], horas_serie)
-    ind_sev, numero_violaciones = indice_red_base
+
     
     # --- ANALISIS CONDICION N-1 (CONTINGENCIAS) ---
     indice_severidad = contingencias_transmision(configuracion_contingencias, net, df_mline, df_mtrafo, 
@@ -89,7 +87,7 @@ def opcion_DC_1(df_mtrafo: df, df_demanda: df, df_desp_TH: df, df_desp_ren: df, 
     graficador_op1 (net, df_mline, df_mtrafo, df_demanda,df_desp_TH, df_desp_ren, Slacks,
                         top_contingencias, rta_ctg_dgm)
     diagrama_elementos_criticos(net, analisis_componentes, ranking_contingencias,
-                                df_mtrafo, df_mline, nombre_estudio, ruta_base, ind_sev)
+                                df_mtrafo, df_mline, nombre_estudio, ruta_base)
 
     # --- ANALISIS DE REFUERZOS PROPUESTOS POR EL PROGRAMA ---
     if diagnostico:
