@@ -474,6 +474,7 @@ def analisis_escenarios(df_desp_TH: pd.DataFrame, df_desp_ren: pd.DataFrame, df_
             df.set_index(['Etapa', 'Serie', 'Bloque'], inplace=True)
             df.drop(columns=['Fecha'], inplace = True)
         return df
+    
     def analisis_df(df: pd.DataFrame, year: int, nombre_df: str):
         val_q_sup = df['Transferencia_Total'].quantile(q=PERCENTIL_SUPERIOR, interpolation='nearest')
         val_q_inf = df['Transferencia_Total'].quantile(q=PERCENTIL_INFERIOR, interpolation='nearest')
@@ -561,8 +562,14 @@ def analisis_flujos(df_flujos: pd.DataFrame, interconexiones: dict, rta_esc: str
                 transferencia = df_escenarios['Transferencia_Total'].copy()
                 val_q_sup = transferencia.quantile(q=PERCENTIL_SUPERIOR, interpolation='nearest')
                 val_q_inf = transferencia.quantile(q=PERCENTIL_INFERIOR, interpolation='nearest')
-                idx_sup = (transferencia - val_q_sup).abs().idxmin()
-                idx_inf = (transferencia - val_q_inf).abs().idxmin()
+                maxima_transferencia_mw = max(abs(val_q_inf), abs(val_q_sup))
+                if maxima_transferencia_mw == val_q_sup:
+                    maxima = val_q_sup
+                else:
+                    maxima = val_q_inf
+                minima = transferencia.loc[transferencia.abs().idxmin()]
+                idx_sup = (transferencia - maxima).abs().idxmin()
+                idx_inf = (transferencia - minima).abs().idxmin()
                 extremos = [('MAX', idx_sup), ('MIN', idx_inf)]
                 for tipo, idx in extremos:
                     fila_esc = df_escenarios.loc[idx]
