@@ -641,7 +641,7 @@ class Configuracion_Simulacion_Contingencias:
 2.6 Funcion principal de simulacion de contingencias secuencial
 """
 
-def  identificacion_contingencia(net, config_sim_contingencias):
+def identificacion_contingencia(net, config_sim_contingencias):
     lista_contingencias = config_sim_contingencias.lista_contingencias
     lista_id_contingencia = []
     for cont in lista_contingencias:

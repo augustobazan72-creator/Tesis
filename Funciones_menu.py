@@ -10,7 +10,7 @@ from Rutas import (carpetas_OP1, carpetas_OP2, carpetas_OP3_cep, carpetas_OP3_se
                 pedir_ruta, carpeta_existente, carpetas_OP7)
 from Configuracion_inicial import config_estudio, config_estudio_2, cambiar_ubicacion_logger_txt, eliminar_carpeta, input_log
 from Motor_DC import (Configuracion_Simulacion, Configuracion_Simulacion_Contingencias, caso_base_completo,
-                contingencias_transmision, caso_base_escenarios, contingencias_op5)
+                contingencias_transmision, caso_base_escenarios, contingencias_op5, identificacion_contingencia)
 from Analisis_estadistico import (analisis_caso_base, analisis_contingencias, analisis_escenarios, analisis_flujos, indice_cond_n)
 from Red_pandapower import reporte_red, trafos_gen
 from Diagramas_cargabilidad import (graficador_op1, graficador_op3_p1, graficador_op3_p2, graficador_op5_rb, graficador_op5_ctg,
@@ -238,10 +238,11 @@ def areas(net, opcion):
     print(f'{'='*80}')
     if opcion == '1':
         interconexiones = {
-                    'Centro - Oriente' : ['CAR500BRE500', 'CAR230YAP230', 'CAR230230ARB230', 'MAT230BRE230'], # C-O
+                    'Centro - Oriente' : ['CAR500BRE500', 'CAR230YAP230', 'CAR230ARB230', 'MAT230BRE230'], # C-O
                     'Centro - Sur' : ['CAT115OCU115', 'SAN230SUC230', 'SEH230SUC230', 'MIZ230SUC230', 'MIZ230SUC(2)'], # C-S
                     'Oriente - Norte' : ['GUA230PRA230', 'GUA230PRA(2)'], # O-N
-                    'Centro - Norte' : ['SAN230PCA230', 'SAN230PCA(2)', 'SAN230UMA230', 'SAN230PLD230', 'VIN230MAZ230', 'VIN230PAT230', 'PGA230CBA230'], # C-N
+                    'Centro - Norte' : ['SAN230PCA230', 'SAN230PCA(2)', 'SAN230UMA230', 'SAN230PLD230', 'VIN230MAZ230',
+                                        'VIN230PAT230', 'PGA230CBA230'], # C-N
         }
         logger.info(f'Las interconexiones predeterminadas son:')
         for llave, valor in interconexiones.items():
@@ -355,6 +356,7 @@ def opcion_DC_5(nombre_bd, ruta_carpeta_base, net, df_mline, df_mtrafo, df_deman
         contingencias_op5(escenarios, contingencias, configuracion_contingencias, net, df_mline, df_mtrafo, df_demanda, df_desp_TH,
                                     df_desp_ren, Slacks, datos_estudio, df_fechas, rta_ctg_fp, rta_ctg_pip, df_duraci,
                                     configuracion_estudio['nucleos'], configuracion_estudio['reportes_cont_flujos'], trafos_limpios)
+        contingencias = identificacion_contingencia(net, configuracion_contingencias)
         graficador_op5_ctg(net, df_mline, df_mtrafo, df_demanda,df_desp_TH, df_desp_ren, Slacks, escenarios,
                         contingencias, rta_ctg_dgm)
 

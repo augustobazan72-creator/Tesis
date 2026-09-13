@@ -472,7 +472,7 @@ def analisis_escenarios(df_desp_TH: pd.DataFrame, df_desp_ren: pd.DataFrame, df_
             df = pd.merge(df, df_fechas, on='Etapa', how='left')
             df['años'] = df['Fecha'].dt.year
             df.set_index(['Etapa', 'Serie', 'Bloque'], inplace=True)
-            df.drop(columns=['Fecha'], inplace = True)
+            df.drop(columns=['Fecha', 'Years'], inplace = True)
         return df
     
     def analisis_df(df: pd.DataFrame, year: int, nombre_df: str):

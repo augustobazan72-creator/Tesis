@@ -97,6 +97,34 @@ def resultados_diagnostico(analisis_componentes: pd.DataFrame, ranking_contingen
         archivo.write(f'\n{'='*80}\n')
         return ruta_base
 
+def _flatten(item):
+    return item if isinstance(item, list) else [item]
+
+def lista_indices_elementos(lista, net, df_trafo, df_lineas):
+    lineas, trafos = [], []
+    trafos_net = net.trafo['name'].tolist()
+    for elemento in lista:
+        if elemento in trafos_net:
+            id_t = df_trafo[df_trafo['name'] == elemento].index[0]
+            trafos.append(id_t)
+        else:
+            id_l = df_lineas[df_lineas['name'] == elemento].index[0]
+            lineas.append(id_l)
+    return lineas, trafos
+
+def resaltado_elementos(lineas, trafos, net, tipo_elemento, color):
+    lineas_resaltadas = []
+    if lineas:
+        trace_lcrit = create_line_trace(net, lines=lineas, width=6, color=color,
+            trace_name=f"Lineas {tipo_elemento}")
+        lineas_resaltadas = _flatten(trace_lcrit)
+    trafos_resaltados = []
+    if trafos:
+        trace_tcrit = create_trafo_trace(net, trafos=trafos, width=8, color=color,
+            trace_name=f"Trafos {tipo_elemento}")
+        trafos_resaltados = _flatten(trace_tcrit)
+    return lineas_resaltadas, trafos_resaltados
+
 def diagrama_elementos_criticos(net, analisis_componentes: pd.DataFrame, ranking_contingencias: pd.DataFrame,
                                 df_mtrafo: pd.DataFrame, df_mline: pd.DataFrame, nombre_estudio, ruta_base):
     print('='*80)
@@ -105,9 +133,6 @@ def diagrama_elementos_criticos(net, analisis_componentes: pd.DataFrame, ranking
     if net.bus_geodata.empty:
         logger.warning('La red no cuenta con coordenadas por lo que no se generara el diagrama.')
         return
-    # FUNCION AUX
-    def _flatten(item):
-        return item if isinstance(item, list) else [item]
 
     # MAPA DE COLORES
     color_map = {69.0: "red", 115.0: "blue", 230.0: "green", 500.0: "fuchsia"}
@@ -158,45 +183,30 @@ def diagrama_elementos_criticos(net, analisis_componentes: pd.DataFrame, ranking
 
     # PREPARACION ELEMENTOS CRITICOS CONDICION N 
     df1 = analisis_componentes[analisis_componentes['P_1%'] > 100].copy()
-    criticos_condicion_n = df1['Nombre_Componente'].tolist()
-    logger.info(f'Se identificaron [{len(criticos_condicion_n)}] elementos criticos en condicion "n".')
+    criticos_condicion_n = set(df1['Nombre_Componente'].tolist())
     # PREPARACION ELEMENTOS CRITICOS CONTINGENCIAS 
     indices = np.sort(ranking_contingencias['Ind_Sev'].values)
     quartil_1 = np.percentile(indices, 25)
     quartil_3 = np.percentile(indices, 75)
     indice_ref = quartil_3 + 1.5 * (quartil_3-quartil_1)
     df2 = ranking_contingencias[ranking_contingencias['Ind_Sev'] > indice_ref].copy()
-    criticos_contingencias = df2['Contingencia'].tolist()
-    logger.info(f'El indice de severidad de referencia es: {indice_ref}')
-    logger.info(f'Se identificaron [{len(criticos_contingencias)}] contingencias criticas.')
-    trafos_net = net.trafo['name'].tolist()
-    lista_elementos_criticos = list(set(criticos_condicion_n + criticos_contingencias))
-    logger.info(f'Se identificaron: {len(lista_elementos_criticos)} elementos criticos en total.')
-    lineas = []
-    trafos = []
-    for elemento in lista_elementos_criticos:
-        if elemento in trafos_net:
-            id_t = df_trafo[df_trafo['name'] == elemento].index[0]
-            trafos.append(id_t)
-        else:
-            id_l = df_lineas[df_lineas['name'] == elemento].index[0]
-            lineas.append(id_l)
+    criticos_contingencias = set(df2['Contingencia'].tolist())
+    # listas de elementos a resaltar
+    criticos = criticos_condicion_n.difference(criticos_contingencias)
+    ambos = criticos_condicion_n.intersection(criticos_contingencias)
+    severos = criticos_contingencias.difference(criticos_condicion_n)
+    lineas_sbc, trafos_sbc = lista_indices_elementos(list(criticos), net)
+    lineas_ambos, trafos_ambos = lista_indices_elementos(list(ambos), net)
+    lineas_sev, trafos_sev = lista_indices_elementos(list(severos), net)
 
     # RESALTADO DE ELEMENTOS CRITICOS
-    markers_lcrit = []
-    if lineas:
-        trace_lcrit = create_line_trace(net, lines=lineas, width=6, color="orange",
-            trace_name="Lineas criticas")
-        markers_lcrit = _flatten(trace_lcrit)
-    markers_tcrit = []
-    if trafos:
-        trace_tcrit = create_trafo_trace(net, trafos=trafos, width=8, color="orange",
-            trace_name="Trafos criticos")
-        markers_tcrit = _flatten(trace_tcrit)
+    lineas_sbc, trafos_sbc = resaltado_elementos(lineas_sbc, trafos_sbc, net, 'criticos', 'yellow')
+    lineas_ambos, trafos_ambos = resaltado_elementos(lineas_ambos, trafos_ambos, net, 'criticos-severos', 'orange')
+    lineas_sev, trafos_sev= resaltado_elementos(lineas_sev, trafos_sev, net, 'severos', 'cyan')
 
     # GRAFICAMOS
     all_traces = (bus_trace if isinstance(bus_trace, list) else _flatten(bus_trace)) \
-                + line_traces + trafo_traces + markers_lcrit + markers_tcrit
+                + line_traces + trafo_traces + lineas_sbc + trafos_sbc + lineas_ambos + trafos_ambos + lineas_sev + trafos_sev
     fig = draw_traces(all_traces, on_map=True, map_style='basic', auto_open=False,
                     filename=f"Diagrama_elementos_criticos_{nombre_estudio}.html", figsize=1.5, showlegend=True)
     ruta = Path(ruta_base) / f"Diagrama_elementos_criticos_{nombre_estudio}.html"

@@ -166,7 +166,7 @@ def carpetas_OP4(ruta_carpeta_base: str | Path, nombre_bd : str):
 
 def carpetas_OP5(ruta_carpeta_base: str | Path, nombre_bd : str, llave_contingencias: bool):
     ruta_carpeta_base = Path(ruta_carpeta_base)
-    ruta_base = ruta_carpeta_base / f"Op5_{nombre_bd}_(Flujos)"
+    ruta_base = ruta_carpeta_base / f"Op6_{nombre_bd}_(Flujos)"
     rta_cn = ruta_base / "1. Condicion_n"
     rta_flw = ruta_base / "1. Condicion_n/1. Flujos_escenario"
     rta_dgm = ruta_base / "1. Condicion_n/2. Diagramas cargabilidad"
@@ -201,7 +201,7 @@ def carpetas_OP5(ruta_carpeta_base: str | Path, nombre_bd : str, llave_contingen
 
 def carpetas_OP6_sep(ruta_carpeta_base: str | Path, nombre_bd : str):
     ruta_carpeta_base = Path(ruta_carpeta_base)
-    ruta_base = ruta_carpeta_base / f"Op6_{nombre_bd}_(Graficas)"
+    ruta_base = ruta_carpeta_base / f"Op7_{nombre_bd}_(Graficas)"
     rta_cn = ruta_base / "1. Condicion_n"
     rta_ctg_pip = ruta_base / "2. Contingencias/1. Reportes_PIp"
     rta_ctg = ruta_base / "2. Contingencias"

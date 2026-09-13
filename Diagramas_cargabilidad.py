@@ -3,9 +3,14 @@ from Configuracion_inicial import input_log
 from pandapower.plotting.plotly import pf_res_plotly
 import matplotlib.ticker as ticker
 import matplotlib
+import matplotlib.colors as mplc
 import matplotlib.pyplot as plt
+from matplotlib.colors import LinearSegmentedColormap
 from matplotlib.widgets import CheckButtons
 from pathlib import Path
+from pandapower.plotting.plotly.traces import (create_bus_trace, create_line_trace, create_trafo_trace,
+                    draw_traces)
+import warnings
 import gc
 import pandas as pd
 import numpy as np
@@ -37,6 +42,8 @@ def simular_contingencia(escenario, contingencia, net, df_mline, df_mtrafo, df_d
     config_dd = Configurador_Despacho_Demanda(net_copy, df_demanda, df_desp_TH, df_desp_ren, Slacks)
     gestor_topologia.aplicar_topologia_etapa(etapa)
     config_dd.configurar_escenario(etapa, serie, bloque)
+    active_lines = net_copy.line[net_copy.line.in_service].index
+    active_trafos = net_copy.trafo[net_copy.trafo.in_service].index
     id_cont, tipo_cont, nombre_cont = contingencia
     if tipo_cont == 'line':
         prev_status = net_copy.line.at[id_cont, 'in_service']
@@ -48,7 +55,7 @@ def simular_contingencia(escenario, contingencia, net, df_mline, df_mtrafo, df_d
         simular_flujo_DC(net_copy, check_conn=False)
         nombre = f'Diagrama_cont_{nombre_cont}_E[{etapa}],S[{serie}],B[{bloque}].html'
         nombre_archivo = str(ruta_contingencias/nombre)
-        graficar_red(net_copy, nombre_archivo, auto_open)
+        graficar_red(net_copy, nombre_archivo, auto_open, active_lines, active_trafos)
     except Exception as e:
         logger.error(f"Error en flujo DC para contingencia '{nombre_cont}' "
                 f"(E:{etapa}, S:{serie}, B:{bloque}): {e}")
@@ -66,22 +73,81 @@ def simular_caso_base(escenario, net, df_mline, df_mtrafo, df_demanda, df_desp_T
     config_dd = Configurador_Despacho_Demanda(net_copy, df_demanda, df_desp_TH, df_desp_ren, Slacks)
     gestor_topologia.aplicar_topologia_etapa(etapa)
     config_dd.configurar_escenario(etapa, serie, bloque)
+    active_lines = net_copy.line[net_copy.line.in_service].index
+    active_trafos = net_copy.trafo[net_copy.trafo.in_service].index
     simular_flujo_DC(net_copy)
     if nombre == None:
         nombre = f'Diagrama_cond_n_(E[{etapa}]_S[{serie}]_B[{bloque}]).html'
     nombre_archivo = str(ruta_analisis_energetico/nombre)
-    graficar_red(net_copy, nombre_archivo, auto_open)
+    graficar_red(net_copy, nombre_archivo, auto_open, active_lines, active_trafos)
 
-def graficar_red(net, nombre_archivo, auto_open):
-    net.res_line.loc[net.line['in_service'] == False, 'loading_percent'] = np.nan
-    net.res_trafo.loc[net.trafo['in_service'] == False, 'loading_percent'] = np.nan
+def graficar_red(net, nombre_archivo, auto_open, active_lines, active_trafos):
+    net.res_line.loc[net.line['in_service'] == 0, 'loading_percent'] = np.nan
+    net.res_trafo.loc[net.trafo['in_service'] == 0, 'loading_percent'] = np.nan
+    active_lines = sorted(active_lines)
+    active_trafos = sorted(active_trafos)
+
     pp_logger = logging.getLogger("pandapower")
     old_level = pp_logger.level
     pp_logger.setLevel(logging.ERROR)
-    try:
-        pf_res_plotly(net, on_map=True, map_style='light', filename=nombre_archivo, auto_open=auto_open)
-    finally:
-        pp_logger.setLevel(old_level)
+
+    cm = [(0.0, 'blue'), (0.5, 'green'), (0.9, 'yellow'), (1.0, 'red')]
+    custom_cmap = LinearSegmentedColormap.from_list("cmap_cargabilidades", cm)
+    norm = mplc.Normalize(vmin=0, vmax=100)
+
+    def color_for(loading):
+        if pd.isna(loading):
+            return "purple"
+        r, g, b, a = custom_cmap(norm(np.clip(loading, 0, 100)))
+        return mplc.to_hex((r, g, b))
+
+    if not net.bus_geodata.empty:
+        try:
+            line_info = pd.Series(index=active_lines, dtype=str)
+            for idx in active_lines:
+                name = net.line.loc[idx, "name"] if "name" in net.line.columns and pd.notna(net.line.loc[idx, "name"]) else f"Línea {idx}"
+                loading = net.res_line.loc[idx, "loading_percent"]
+                p_mw = net.res_line.loc[idx, "p_from_mw"]
+                loading_str = "Fuera de servicio (contingencia)" if pd.isna(loading) else f"{loading:.2f}%"
+                p_str = "-" if pd.isna(p_mw) else f"{p_mw:.2f} MW"
+                line_info[idx] = f"<b>{name}</b><br>Cargabilidad: {loading_str}<br>Potencia: {p_str}"
+
+            trafo_info = pd.Series(index=active_trafos, dtype=str)
+            for idx in active_trafos:
+                name = net.trafo.loc[idx, "name"] if "name" in net.trafo.columns and pd.notna(net.trafo.loc[idx, "name"]) else f"Trafo {idx}"
+                loading = net.res_trafo.loc[idx, "loading_percent"]
+                p_mw = net.res_trafo.loc[idx, "p_hv_mw"]
+                loading_str = "Fuera de servicio (contingencia)" if pd.isna(loading) else f"{loading:.2f}%"
+                p_str = "-" if pd.isna(p_mw) else f"{p_mw:.2f} MW"
+                trafo_info[idx] = f"<b>{name}</b><br>Cargabilidad: {loading_str}<br>Potencia: {p_str}"
+
+            active_buses = net.bus[net.bus.in_service].index
+            bus_trace = create_bus_trace(net, buses=active_buses, size=6, color="blue")
+
+            # --- una llamada por elemento: sin cmap_vals, sin orden que pueda desalinearse ---
+            line_trace = []
+            for idx in active_lines:
+                loading = net.res_line.loc[idx, "loading_percent"]
+                line_trace += create_line_trace(net, lines=[idx], color=color_for(loading), width=2,
+                        trace_name="Cargabilidad lineas (%)", infofunc=line_info.loc[[idx]])
+
+            trafo_trace = []
+            for idx in active_trafos:
+                loading = net.res_trafo.loc[idx, "loading_percent"]
+                trafo_trace += create_trafo_trace(net, trafos=[idx], color=color_for(loading), width=4,
+                        trace_name="Cargabilidad trafos (%)", infofunc=trafo_info.loc[[idx]])
+
+            traces = bus_trace + line_trace + trafo_trace
+            fig = draw_traces(traces, on_map=True, map_style='basic', auto_open=False,
+                        filename=f"Diagrama_contingencias.html", figsize=1.5, showlegend=False)
+            fig.write_html(Path(nombre_archivo))
+        finally:
+            pp_logger.setLevel(old_level)
+    else:
+        try:
+            pf_res_plotly(net, on_map=True, map_style='basic', filename=nombre_archivo, auto_open=auto_open)
+        finally:
+            pp_logger.setLevel(old_level)
 
 def graficador_op1 (net, df_mline, df_mtrafo, df_demanda,df_desp_TH, df_desp_ren, Slacks,
                         top_contingencias, ruta_diagramas_cont):

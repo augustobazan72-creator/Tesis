@@ -268,7 +268,7 @@ def pedir_contingencias_graficador(net):
         if entrada_cont.strip() == '':
             return elementos_red
         contingencias = [c.strip().upper() for c in entrada_cont.split(',') if c.strip()]
-        contingencias = set(contingencias)
+        contingencias = list(set(contingencias))
         cotingencias_validas = contingencias.issubset(elementos_red)
         if cotingencias_validas:
             logger.info(f'Se validaron las contingencias: {contingencias}')
