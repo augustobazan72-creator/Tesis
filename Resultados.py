@@ -195,9 +195,9 @@ def diagrama_elementos_criticos(net, analisis_componentes: pd.DataFrame, ranking
     criticos = criticos_condicion_n.difference(criticos_contingencias)
     ambos = criticos_condicion_n.intersection(criticos_contingencias)
     severos = criticos_contingencias.difference(criticos_condicion_n)
-    lineas_sbc, trafos_sbc = lista_indices_elementos(list(criticos), net)
-    lineas_ambos, trafos_ambos = lista_indices_elementos(list(ambos), net)
-    lineas_sev, trafos_sev = lista_indices_elementos(list(severos), net)
+    lineas_sbc, trafos_sbc = lista_indices_elementos(list(criticos), net, df_trafo, df_lineas)
+    lineas_ambos, trafos_ambos = lista_indices_elementos(list(ambos), net, df_trafo, df_lineas)
+    lineas_sev, trafos_sev = lista_indices_elementos(list(severos), net, df_trafo, df_lineas)
 
     # RESALTADO DE ELEMENTOS CRITICOS
     lineas_sbc, trafos_sbc = resaltado_elementos(lineas_sbc, trafos_sbc, net, 'criticos', 'yellow')
