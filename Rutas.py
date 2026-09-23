@@ -84,9 +84,9 @@ def creacion_carpetas_refuerzos (ruta_refuerzos, nombre_del_estudio, num):
     ruta_pip.mkdir(parents=True, exist_ok=True) 
     return (ruta_caso_base, ruta_reporte_red, ruta_graf, ruta_cont, ruta_pip, ruta_ref)
 
-def carpetas_OP2(ruta_carpeta_base: str | Path, nombre_bd : str, nombre_excel_refuerzos: str):
+def carpetas_OP3(ruta_carpeta_base: str | Path, nombre_bd : str, nombre_excel_refuerzos: str):
     ruta_carpeta_base = Path(ruta_carpeta_base).parent
-    ruta_base = ruta_carpeta_base / f"Op2_{nombre_bd}_(A.Refuerzos)_({nombre_excel_refuerzos})"
+    ruta_base = ruta_carpeta_base / f"Op3_{nombre_bd}_(A.Refuerzos)_({nombre_excel_refuerzos})"
     rta_cart = ruta_base / "1. Carteras"
     rta_econ = ruta_base / "2. Informacion economica"
     rta_top_prev = ruta_base / "3. Topologia previa"
@@ -98,9 +98,9 @@ def carpetas_OP2(ruta_carpeta_base: str | Path, nombre_bd : str, nombre_excel_re
         sub.mkdir(parents=True, exist_ok=True)
     return (ruta_base, rta_cart, rta_econ, rta_top_prev)
 
-def carpetas_OP3_sep(ruta_carpeta_base: str | Path, nombre_bd : str):
+def carpetas_OP2_sep(ruta_carpeta_base: str | Path, nombre_bd : str):
     ruta_carpeta_base = Path(ruta_carpeta_base)
-    ruta_base = ruta_carpeta_base / f"Op3_{nombre_bd}_(Esc.Criticos)"
+    ruta_base = ruta_carpeta_base / f"Op2_{nombre_bd}_(Esc.Criticos)"
     rta_esc = ruta_base / "1. Escenarios criticos"
     ruta_reporte_red = ruta_base / "1. Escenarios criticos" / "0. Despachos - demandas - topologia"
     rta_infred = ruta_base / "2. Informacion de la red"
@@ -115,7 +115,7 @@ def carpetas_OP3_sep(ruta_carpeta_base: str | Path, nombre_bd : str):
         sub.mkdir(parents=True, exist_ok=True)
     return (ruta_base, rta_cn, rta_esc, rta_infred, ruta_reporte_red)
 
-def carpetas_OP3_cep(ruta_carpeta_base: str | Path, nombre_bd : str):
+def carpetas_OP2_cep(ruta_carpeta_base: str | Path, nombre_bd : str):
     ruta_carpeta_base = Path(ruta_carpeta_base)
     ruta_base = ruta_carpeta_base / f"Op3_{nombre_bd}_(Esc.Criticos)"
     rta_esc = ruta_base / "1. Escenarios criticos"
@@ -128,7 +128,7 @@ def carpetas_OP3_cep(ruta_carpeta_base: str | Path, nombre_bd : str):
         sub.mkdir(parents=True, exist_ok=True)
     return (ruta_base, rta_esc, rta_infred)
 
-def carpetas_op3_individual(rta_esc, id, year):
+def carpetas_op2_individual(rta_esc, id, year):
     ruta_yyyy = rta_esc/f'{id}. {year}'
     ruta_diagramas = ruta_yyyy/'1. Diagramas(Cargabilidad)'
     ruta_graficas = ruta_yyyy/'2. Graficas'
@@ -141,9 +141,9 @@ def carpetas_op3_individual(rta_esc, id, year):
         sub.mkdir(parents=True, exist_ok=True)
     return ruta_yyyy, ruta_diagramas, ruta_graficas
 
-def carpetas_OP4(ruta_carpeta_base: str | Path, nombre_bd : str):
+def carpetas_OP5(ruta_carpeta_base: str | Path, nombre_bd : str):
     ruta_carpeta_base = Path(ruta_carpeta_base)
-    ruta_base = ruta_carpeta_base / f"Op1_{nombre_bd}_(D.Completo)"
+    ruta_base = ruta_carpeta_base / f"Op5_{nombre_bd}_(D.Reducido)"
     rta_cn = ruta_base / "1. Condicion_n"
     rta_cn_graf = ruta_base / "1. Condicion_n/1. Graficas"
     rta_ctg_pip = ruta_base / "2. Contingencias/1. Reportes_PIp"
@@ -164,7 +164,7 @@ def carpetas_OP4(ruta_carpeta_base: str | Path, nombre_bd : str):
     return (rta_reportes, rta_cn, rta_cn_graf, rta_ctg, rta_ctg_fp, rta_ctg_pip, rta_ctg_dgm,
             ruta_base)
 
-def carpetas_OP5(ruta_carpeta_base: str | Path, nombre_bd : str, llave_contingencias: bool):
+def carpetas_OP6(ruta_carpeta_base: str | Path, nombre_bd : str, llave_contingencias: bool):
     ruta_carpeta_base = Path(ruta_carpeta_base)
     ruta_base = ruta_carpeta_base / f"Op6_{nombre_bd}_(Flujos)"
     rta_cn = ruta_base / "1. Condicion_n"
@@ -286,7 +286,7 @@ def ruta_escenarios_criticos (nombre_bd):
         elif (Path(ruta_estudio).exists() and Path(ruta_estudio).is_dir()):
             logger.info(f'La ruta: {ruta_estudio} existe.')
             try:
-                ruta_escenarios = Path(ruta_estudio)/f'Op3_{nombre_bd}_(Esc.Criticos)'/'1. Escenarios criticos'
+                ruta_escenarios = Path(ruta_estudio)/f'Op2_{nombre_bd}_(Esc.Criticos)'/'1. Escenarios criticos'
                 print('='*80)
                 return Path(ruta_estudio), Path(ruta_escenarios)
             except:
@@ -295,9 +295,9 @@ def ruta_escenarios_criticos (nombre_bd):
             logger.warning('Ingrese una ruta valida.')
             print('='*80)
 
-def carpetas_OP7(ruta_carpeta_base: str | Path, nombre_bd : str):
+def carpetas_OP4(ruta_carpeta_base: str | Path, nombre_bd : str):
     ruta_carpeta_base = Path(ruta_carpeta_base)
-    ruta_base = ruta_carpeta_base / f"Op7_{nombre_bd}_(DigSilent)"
+    ruta_base = ruta_carpeta_base / f"Op4_{nombre_bd}_(DigSilent)"
     rta_par = ruta_base / "1. Informacion_Pareo"    
     rta_ac = ruta_base / "2. Analisis_AC"
     subcarpetas = [

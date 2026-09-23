@@ -7,9 +7,9 @@ from Lector_bd_SDDP import lector_SDDP, alcance, validar_datos_SDDP, coordenadas
 from Procesamiento_bd import crear_fechas, modificacion_circuitos, procesar_despachos
 from Red_pandapower import (crear_red, agregar_barras, agregar_cargas, agregar_trafos_lineas, agregar_gen_staticos,
                             agregar_gen_sincronos)
-from Menus import menu_principal, estudio_previo_OP2, estudio_previo_OP3, opcion3_predeterminada, estudio_previo_OP6
-from Funciones_menu import (opcion_DC_1 , opcion_DC_2, obtencion_flujos, opcion_DC_3, opcion_DC_5, opcion_DC_6,
-                            obtencion_flujos_6, opcion_DC_7)
+from Menus import menu_principal, estudio_previo_OP2, estudio_previo_OP2, opcion2_predeterminada, estudio_previo_OP6
+from Funciones_menu import (opcion_DC_diagnostico , opcion_DC_2, obtencion_flujos, opcion_DC_3, opcion_DC_6, opcion_DC_7,
+                            obtencion_flujos_6, opcion_DC_4)
 from Refuerzos import lectura_estudio_previo
 
 # --- Configuracion logging ---
@@ -54,41 +54,41 @@ if __name__ == '__main__':
         opcion = input_log("Seleccione una opcion (1-8): ").strip()
         print(f'{'='*80}')
         if opcion == '1':
-            _ = opcion_DC_1(df_mtrafo, df_demanda, df_desp_TH, df_desp_ren, df_mline, df_fechas,
+            _ = opcion_DC_diagnostico(df_mtrafo, df_demanda, df_desp_TH, df_desp_ren, df_mline, df_fechas,
                 datos_estudio,  Slacks, df_duraci, ruta_carpeta_base, nombre_bd, True, parametros_red, net)
         
         elif opcion == '2':
+            print(f'\n{'='*80}')
+            print("[ESCENARIOS] Identificacion de escenarios criticos.")
+            print(f'{'='*80}')  
+            # --- ADQUISICION DE DATOS DE ESTUDIOS PREVIOS ---
+            ejecutar_flujos = estudio_previo_OP2()
+            df_flujos, rutas = obtencion_flujos(ejecutar_flujos, net, df_mline, df_mtrafo, df_demanda,
+                                df_desp_TH, df_desp_ren, Slacks, datos_estudio, df_fechas, ruta_carpeta_base, nombre_bd, ruta_bd)
+            estudio_predetermindado = opcion2_predeterminada()
+            rta_base, rta_esc, rta_infred = rutas
+            
+            # --- ANALISIS DE ESCENARIOS ---
+            opcion_DC_2(df_flujos, rta_base, rta_esc, rta_infred, df_fechas, nombre_bd, net, df_mline, df_mtrafo,
+                df_demanda, df_desp_TH, df_desp_ren, Slacks, estudio_predetermindado)
+
+        elif opcion == '3':
             # --- ADQUISICION DE DATOS DE ESTUDIOS PREVIOS ---
             realizar_diagnostico = estudio_previo_OP2()
             if realizar_diagnostico:
-                ruta_diagnostico = opcion_DC_1(df_mtrafo, df_demanda, df_desp_TH, df_desp_ren, df_mline, df_fechas,
+                ruta_diagnostico = opcion_DC_diagnostico(df_mtrafo, df_demanda, df_desp_TH, df_desp_ren, df_mline, df_fechas,
                 datos_estudio,  Slacks, df_duraci, ruta_carpeta_base, nombre_bd, False, parametros_red, net)
             else:
                 ruta_diagnostico = pedir_ruta(ruta_bd)
-                cambiar_ubicacion_logger_txt(ruta_diagnostico, 'Reporte ejecucion 2.txt')
+                cambiar_ubicacion_logger_txt(ruta_diagnostico, 'Reporte ejecucion 3.txt')
                 if not Path(ruta_carpeta_base) == Path(ruta_diagnostico).parent:
                     eliminar_carpeta(ruta_carpeta_base)
             df_cargabilidades_rbase, ranking_contingencias_rb = lectura_estudio_previo(ruta_diagnostico)
             
             # --- ANALISIS DE REFUERZOS ---
-            opcion_DC_2(df_cargabilidades_rbase, ranking_contingencias_rb, ruta_diagnostico, nombre_bd, net, df_coord,
+            opcion_DC_3(df_cargabilidades_rbase, ranking_contingencias_rb, ruta_diagnostico, nombre_bd, net, df_coord,
                     df_mtrafo, df_demanda, df_desp_TH, df_desp_ren, Slacks, datos_estudio, df_fechas, df_duraci,
                     parametros_red, df_mline)
-        
-        elif opcion == '3':
-            print(f'\n{'='*80}')
-            print("[ESCENARIOS] Identificacion de escenarios criticos.")
-            print(f'{'='*80}')  
-            # --- ADQUISICION DE DATOS DE ESTUDIOS PREVIOS ---
-            ejecutar_flujos = estudio_previo_OP3()
-            df_flujos, rutas = obtencion_flujos(ejecutar_flujos, net, df_mline, df_mtrafo, df_demanda,
-                                df_desp_TH, df_desp_ren, Slacks, datos_estudio, df_fechas, ruta_carpeta_base, nombre_bd, ruta_bd)
-            estudio_predetermindado = opcion3_predeterminada()
-            rta_base, rta_esc, rta_infred = rutas
-            
-            # --- ANALISIS DE ESCENARIOS ---
-            opcion_DC_3(df_flujos, rta_base, rta_esc, rta_infred, df_fechas, nombre_bd, net, df_mline, df_mtrafo,
-                df_demanda, df_desp_TH, df_desp_ren, Slacks, estudio_predetermindado)
 
         elif opcion == '4':
             print(f'\n{'='*80}')
@@ -99,16 +99,15 @@ if __name__ == '__main__':
                 logger.warning('Se saldra al menu.')
                 break
             else:
-                opcion_DC_7(ruta_estudio, ruta_escenarios, nombre_bd, ruta_carpeta_base, net, df_demanda, df_desp_TH, df_desp_ren,
+                opcion_DC_4(ruta_estudio, ruta_escenarios, nombre_bd, ruta_carpeta_base, net, df_demanda, df_desp_TH, df_desp_ren,
                             Slacks)
         
-
         elif opcion == '5':
-            _ = opcion_DC_1(df_mtrafo, df_demanda, df_desp_TH, df_desp_ren, df_mline, df_fechas,
+            _ = opcion_DC_diagnostico(df_mtrafo, df_demanda, df_desp_TH, df_desp_ren, df_mline, df_fechas,
                 datos_estudio,  Slacks, df_duraci, ruta_carpeta_base, nombre_bd, False, parametros_red, net)
         
         elif opcion == '6':
-            opcion_DC_5(nombre_bd, ruta_carpeta_base, net, df_mline, df_mtrafo, df_demanda, df_desp_TH,df_desp_ren, Slacks,
+            opcion_DC_6(nombre_bd, ruta_carpeta_base, net, df_mline, df_mtrafo, df_demanda, df_desp_TH,df_desp_ren, Slacks,
             datos_estudio, df_fechas, df_duraci)
         
         elif opcion == '7':
@@ -116,11 +115,11 @@ if __name__ == '__main__':
             print("[GRAFICADOR] Generar graficas de flujos y cargabilidades de componentes.")
             print(f'{'='*80}')  
             ejecutar_flujos = estudio_previo_OP6()
-            dfs, rutas, configuracion_estudio = obtencion_flujos_6 (ejecutar_flujos, net, df_mline, df_mtrafo, df_demanda, df_desp_TH, df_desp_ren, Slacks,
+            dfs, rutas, configuracion_estudio = obtencion_flujos_6(ejecutar_flujos, net, df_mline, df_mtrafo, df_demanda, df_desp_TH, df_desp_ren, Slacks,
                                             datos_estudio, df_fechas, ruta_carpeta_base, nombre_bd, ruta_bd)
             rta_ctg_pip, rta_ctg_fp = rutas
             df_cargabilidades, df_flujos = dfs
-            opcion_DC_6(nombre_bd, configuracion_estudio, rta_ctg_pip, rta_ctg_fp, df_cargabilidades, df_flujos, net,
+            opcion_DC_7(nombre_bd, configuracion_estudio, rta_ctg_pip, rta_ctg_fp, df_cargabilidades, df_flujos, net,
                 df_mline, df_mtrafo, df_demanda, df_desp_TH,df_desp_ren, Slacks, datos_estudio, df_fechas, df_duraci)
 
         elif opcion == '8':

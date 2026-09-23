@@ -6,18 +6,18 @@ from pathlib import Path
 import logging
 import re
 from numpy import arange
-from Rutas import (carpetas_OP1, carpetas_OP2, carpetas_OP3_cep, carpetas_OP3_sep, carpetas_OP4, carpetas_OP5, carpetas_OP6_sep,
-                pedir_ruta, carpeta_existente, carpetas_OP7)
-from Configuracion_inicial import config_estudio, config_estudio_2, cambiar_ubicacion_logger_txt, eliminar_carpeta, input_log
+from Rutas import (carpetas_OP1, carpetas_OP2_cep, carpetas_OP2_sep, carpetas_OP3, carpetas_OP4, carpetas_OP5, carpetas_OP6, carpetas_OP6_sep,
+                pedir_ruta, carpeta_existente)
+from Configuracion_inicial import config_estudio, config_estudio_3, cambiar_ubicacion_logger_txt, eliminar_carpeta, input_log
 from Motor_DC import (Configuracion_Simulacion, Configuracion_Simulacion_Contingencias, caso_base_completo,
-                contingencias_transmision, caso_base_escenarios, contingencias_op5, identificacion_contingencia)
-from Analisis_estadistico import (analisis_caso_base, analisis_contingencias, analisis_escenarios, analisis_flujos, indice_cond_n)
+                contingencias_transmision, caso_base_escenarios, contingencias_op7, identificacion_contingencia)
+from Analisis_estadistico import (analisis_caso_base, analisis_contingencias, analisis_escenarios, analisis_flujos)
 from Red_pandapower import reporte_red, trafos_gen
-from Diagramas_cargabilidad import (graficador_op1, graficador_op3_p1, graficador_op3_p2, graficador_op5_rb, graficador_op5_ctg,
+from Diagramas_cargabilidad import (graficador_op1, graficador_op2_p1, graficador_op2_p2, graficador_op6_rb, graficador_op6_ctg,
                                     graficador_condicion_n, graficador_contingencias, graficador_pip)
 from Resultados import (grafica_elementos_criticos, resultados_diagnostico, resultados_refuerzos_propuestos, 
                         resultados_escenarios_criticos, diagrama_elementos_criticos)
-from Refuerzos import analisis_ref_popuestos, ruta_refuerzos_usuario, refuerzos_usuario, constantes
+from Refuerzos import analisis_ref_popuestos, ruta_refuerzos_usuario, refuerzos_usuario
 from Procesamiento_bd import distancias_lineas
 from Lector_excels import lectura_excel_refuerzos, lectura_flujos, lectura_escenarios
 from Analisis_economico import costos
@@ -28,7 +28,7 @@ from Exportacion_PF import menu_vinculacion_pf
 # --- Configuracion logging ---
 logger = logging.getLogger(__name__)
 
-def opcion_DC_1(df_mtrafo: df, df_demanda: df, df_desp_TH: df, df_desp_ren: df, df_mline: df, df_fechas: df,
+def opcion_DC_diagnostico(df_mtrafo: df, df_demanda: df, df_desp_TH: df, df_desp_ren: df, df_mline: df, df_fechas: df,
                 datos_estudio: dict,  Slacks: sr, df_duraci:df, ruta_carpeta_base: str|Path, 
                 nombre_bd: str, diagnostico: bool, parametros_red, net):
     print(f'\n{'='*80}')
@@ -44,7 +44,7 @@ def opcion_DC_1(df_mtrafo: df, df_demanda: df, df_desp_TH: df, df_desp_ren: df, 
                 rta_prop, ruta_base) = carpetas_OP1(ruta_carpeta_base, nombre_bd)
     else:
         (rta_reportes, rta_cn, rta_cn_graf, rta_ctg, rta_ctg_fp, rta_ctg_pip, rta_ctg_dgm,
-            ruta_base) = carpetas_OP4(ruta_carpeta_base, nombre_bd)
+            ruta_base) = carpetas_OP5(ruta_carpeta_base, nombre_bd)
     
     # --- CONFIGURACION INICIAL ESTUDIO ---
     nombre_estudio = f'{nombre_bd}({datetime.now().strftime(f'%H-%M')})'
@@ -98,52 +98,21 @@ def opcion_DC_1(df_mtrafo: df, df_demanda: df, df_desp_TH: df, df_desp_ren: df, 
         resultados_refuerzos_propuestos(resultados, ref_propuestos)
     return ruta_base
 
-def opcion_DC_2(df_cargabilidades_rbase, ranking_contingencias_rb, ruta_diagnostico, nombre_bd, net, df_coord,
-                    df_mtrafo, df_demanda, df_desp_TH, df_desp_ren, Slacks, datos_estudio, df_fechas, df_duraci,
-                    parametros_red, df_mline):
-    print(f'\n{'='*80}')  
-    print("[REFUERZOS] Analisis de propuestas de refuerzos.")
-    print(f'{'='*80}')
-    # --- LEEMOS EL EXCEL DE LOS REFUERZOS ----
-    ruta_refuerzos, nombre_excel_refuerzos = ruta_refuerzos_usuario(ruta_diagnostico)
-    df_refuerzos = lectura_excel_refuerzos(ruta_refuerzos, net)
-    
-    # --- CREACION DE RUTAS (SALIDA) ---
-    _, rta_cart, rta_econ, rta_top_prev = carpetas_OP2(ruta_diagnostico, nombre_bd, nombre_excel_refuerzos)
-    
-    # --- CONFIGURACION INICIAL ---
-    configuracion_estudio_2 = config_estudio_2("opcion_2", ruta_diagnostico.parent)
-    
-    # --- ACTUALIZACION DE DISTANCIAS DE LINEAS RED BASE ---
-    df_mline = distancias_lineas(net, df_coord, df_mline)
-    reporte_red (net, rta_top_prev, 2)
-    logger.info('Se genero el reporte de la topologia de la red con parametros de lineas actualizados.')
-    
-    # --- COSTOS REFERENCIALES PARA EL ANALISIS ECONOMICO ---
-    df_costos_ind, df_costos_reactores = costos(rta_econ)
-    
-    # --- REFUERZOS PROPUESTOS POR EL USUARIO ---
-    ruta_pips_rb = Path(ruta_diagnostico)/"2. Contingencias"/"1. Reportes_PIp"
-    refuerzos_usuario(net, df_refuerzos, df_cargabilidades_rbase, ranking_contingencias_rb, rta_cart, parametros_red,
-                configuracion_estudio_2["elementos_monitoreo"], ruta_pips_rb, configuracion_estudio_2["exponente_n"],
-                df_mline, df_mtrafo, df_demanda, df_desp_TH, df_desp_ren, Slacks, datos_estudio, df_fechas, df_duraci, parametros_red,
-                df_costos_ind, df_costos_reactores, configuracion_estudio_2["nucleos"])
-
 def obtencion_flujos(ejecutar_flujos, net, df_mline, df_mtrafo, df_demanda, df_desp_TH, df_desp_ren, Slacks, datos_estudio,
                     df_fechas, ruta_carpeta_base, nombre_bd, ruta_bd):
     if ejecutar_flujos:
-        rta_base, rta_cn, rta_esc, rta_infred, ruta_reporte_red = carpetas_OP3_sep(ruta_carpeta_base, nombre_bd)
-        configuracion_estudio_3 = config_estudio("opcion_3", ruta_carpeta_base)
+        rta_base, rta_cn, rta_esc, rta_infred, ruta_reporte_red = carpetas_OP2_sep(ruta_carpeta_base, nombre_bd)
+        configuracion_estudio_2 = config_estudio("opcion_2", ruta_carpeta_base)
         nombre_estudio = f'{nombre_bd}({datetime.now().strftime(f'%H-%M')})'
         configuracion_red_base = Configuracion_Simulacion(nombre_estudio)
         _, df_flujos = caso_base_completo (net, df_mline, df_mtrafo, df_demanda, df_desp_TH, df_desp_ren, Slacks, datos_estudio,
-                    df_fechas, configuracion_estudio_3['nucleos'], rta_cn, ruta_reporte_red, configuracion_red_base,
-                    True, configuracion_estudio_3['reportes_cn_flujos'])
+                    df_fechas, configuracion_estudio_2['nucleos'], rta_cn, ruta_reporte_red, configuracion_red_base,
+                    True, configuracion_estudio_2['reportes_cn_flujos'])
     else:
         ruta_diagnostico = pedir_ruta(ruta_bd)
-        rta_base, rta_esc, rta_infred = carpetas_OP3_cep(ruta_diagnostico.parent, nombre_bd)
-        configuracion_estudio_3 = config_estudio("opcion_3", ruta_diagnostico.parent)
-        cambiar_ubicacion_logger_txt(ruta_diagnostico.parent, 'Reporte ejecucion 3.txt')
+        rta_base, rta_esc, rta_infred = carpetas_OP2_cep(ruta_diagnostico.parent, nombre_bd)
+        configuracion_estudio_2 = config_estudio("opcion_2", ruta_diagnostico.parent)
+        cambiar_ubicacion_logger_txt(ruta_diagnostico.parent, 'Reporte ejecucion 2.txt')
         if not Path(ruta_carpeta_base) == Path(ruta_diagnostico).parent:
             eliminar_carpeta(ruta_carpeta_base)
         _, df_flujos = lectura_flujos(ruta_diagnostico, datos_estudio, net)
@@ -258,7 +227,7 @@ def areas(net, opcion):
         print(f'{'='*80}')
         return interconexiones
 
-def opcion_DC_3(df_flujos, rta_base, rta_esc, rta_infred, df_fechas, nombre_bd, net, df_mline, df_mtrafo,
+def opcion_DC_2(df_flujos, rta_base, rta_esc, rta_infred, df_fechas, nombre_bd, net, df_mline, df_mtrafo,
                 df_demanda, df_desp_TH, df_desp_ren, Slacks, estudio_predetermindado):
     # --- CONFIGURACION INICIAL ---
     if not estudio_predetermindado:
@@ -276,16 +245,47 @@ def opcion_DC_3(df_flujos, rta_base, rta_esc, rta_infred, df_fechas, nombre_bd, 
     # --- ANALISIS DE ESCENARIOS CRITICOS P1 ---
     rutas_anio, lista_escenarios, df_escenarios_p1 = analisis_escenarios(df_desp_TH, df_desp_ren, df_demanda, rta_esc,
                                                                     lista_yyyy, df_fechas)
-    graficador_op3_p1 (net, df_mline, df_mtrafo, df_demanda,df_desp_TH, df_desp_ren, Slacks,
+    graficador_op2_p1 (net, df_mline, df_mtrafo, df_demanda,df_desp_TH, df_desp_ren, Slacks,
                         lista_escenarios, rutas_anio)
     
     # --- ANALISIS DE FLUJOS (INTERCONEXIONES) ---
     lista_completa, df_escenarios_p2 = analisis_flujos(df_flujos, interconexiones, rta_esc, rutas_anio, lista_yyyy)
-    graficador_op3_p2 (net, df_mline, df_mtrafo, df_demanda, df_desp_TH, df_desp_ren, Slacks,
+    graficador_op2_p2 (net, df_mline, df_mtrafo, df_demanda, df_desp_TH, df_desp_ren, Slacks,
                         lista_completa, rutas_anio)
     
     # --- RESULTADOS ---
     resultados_escenarios_criticos (df_escenarios_p1, df_escenarios_p2, rta_base, nombre_bd)
+
+def opcion_DC_3(df_cargabilidades_rbase, ranking_contingencias_rb, ruta_diagnostico, nombre_bd, net, df_coord,
+                    df_mtrafo, df_demanda, df_desp_TH, df_desp_ren, Slacks, datos_estudio, df_fechas, df_duraci,
+                    parametros_red, df_mline):
+    print(f'\n{'='*80}')  
+    print("[REFUERZOS] Analisis de propuestas de refuerzos.")
+    print(f'{'='*80}')
+    # --- LEEMOS EL EXCEL DE LOS REFUERZOS ----
+    ruta_refuerzos, nombre_excel_refuerzos = ruta_refuerzos_usuario(ruta_diagnostico)
+    df_refuerzos = lectura_excel_refuerzos(ruta_refuerzos, net)
+    
+    # --- CREACION DE RUTAS (SALIDA) ---
+    _, rta_cart, rta_econ, rta_top_prev = carpetas_OP3(ruta_diagnostico, nombre_bd, nombre_excel_refuerzos)
+    
+    # --- CONFIGURACION INICIAL ---
+    configuracion_estudio_3 = config_estudio_3("opcion_3", ruta_diagnostico.parent)
+    
+    # --- ACTUALIZACION DE DISTANCIAS DE LINEAS RED BASE ---
+    df_mline = distancias_lineas(net, df_coord, df_mline)
+    reporte_red (net, rta_top_prev, 2)
+    logger.info('Se genero el reporte de la topologia de la red con parametros de lineas actualizados.')
+    
+    # --- COSTOS REFERENCIALES PARA EL ANALISIS ECONOMICO ---
+    df_costos_ind, df_costos_reactores = costos(rta_econ)
+    
+    # --- REFUERZOS PROPUESTOS POR EL USUARIO ---
+    ruta_pips_rb = Path(ruta_diagnostico)/"2. Contingencias"/"1. Reportes_PIp"
+    refuerzos_usuario(net, df_refuerzos, df_cargabilidades_rbase, ranking_contingencias_rb, rta_cart, parametros_red,
+                configuracion_estudio_3["elementos_monitoreo"], ruta_pips_rb, configuracion_estudio_3["exponente_n"],
+                df_mline, df_mtrafo, df_demanda, df_desp_TH, df_desp_ren, Slacks, datos_estudio, df_fechas, df_duraci, parametros_red,
+                df_costos_ind, df_costos_reactores, configuracion_estudio_3["nucleos"])
 
 def pedir_escenarios(datos_estudio):
     print(f'{'='*80}')
@@ -316,7 +316,24 @@ def pedir_escenarios(datos_estudio):
     logger.info(f'Se validaron los escenarios {escenarios} Correctamente')
     return escenarios
 
-def opcion_DC_5(nombre_bd, ruta_carpeta_base, net, df_mline, df_mtrafo, df_demanda, df_desp_TH,df_desp_ren, Slacks,
+def opcion_DC_4(ruta_estudio, ruta_escenarios, nombre_bd, ruta_carpeta_base, net, df_demanda, df_desp_TH, df_desp_ren,
+                Slacks):
+    # CONFIGURACION INICIAL
+    configuracion_estudio_4 = config_estudio("opcion_4", ruta_estudio)
+    cambiar_ubicacion_logger_txt((ruta_estudio), 'Reporte ejecucion 4.txt')
+    if not Path(ruta_estudio) == Path(ruta_carpeta_base):
+        eliminar_carpeta(ruta_carpeta_base)
+    # LECTURA DE ESCENARIOS
+    df_p1, df_p2 = lectura_escenarios(ruta_escenarios)
+    if df_p1.empty or df_p2.empty:
+        e = 'Existe uno o ambos dataframe de escenario(s) vacio(s), por lo que no se mostraran los escenarios criticos'
+        logger.warning(e)
+    # FUNCION
+    rta_par, rta_ac = carpetas_OP4(ruta_estudio, nombre_bd)
+    menu_vinculacion_pf(df_p1, df_p2, rta_par, rta_ac, net, df_demanda, df_desp_TH, df_desp_ren,
+                        Slacks, configuracion_estudio_4)
+
+def opcion_DC_6(nombre_bd, ruta_carpeta_base, net, df_mline, df_mtrafo, df_demanda, df_desp_TH,df_desp_ren, Slacks,
             datos_estudio, df_fechas, df_duraci):
     print(f'{'='*80}')  
     print("[FLUJOS] Ejecutar flujos de potencia en DC solo para escenarios y/o contingencias seleccionadas.")
@@ -325,17 +342,17 @@ def opcion_DC_5(nombre_bd, ruta_carpeta_base, net, df_mline, df_mtrafo, df_deman
     # --- CONFIGURACION INICIAL ---
     ruta_carpeta_nueva, cambiar_reporte = carpeta_existente(ruta_carpeta_base)
     if cambiar_reporte:
-        cambiar_ubicacion_logger_txt(ruta_carpeta_nueva, 'Reporte ejecucion 5.txt')
+        cambiar_ubicacion_logger_txt(ruta_carpeta_nueva, 'Reporte ejecucion 6.txt')
         if not Path(ruta_carpeta_base) == Path(ruta_carpeta_nueva):
             eliminar_carpeta(ruta_carpeta_base)
     escenarios = pedir_escenarios(datos_estudio)
     contingencias, llave_contingencias = pedir_contingencias(net)
-    configuracion_estudio = config_estudio("opcion_5", ruta_carpeta_nueva)
+    configuracion_estudio = config_estudio("opcion_6_7", ruta_carpeta_nueva)
     nombre_estudio = f'{nombre_bd}({datetime.now().strftime(f'%H-%M')})'
     configuracion_red_base = Configuracion_Simulacion(nombre_estudio)
     
     # --- CREACION DE RUTAS (SALIDA) ---
-    _, rta_flw, rta_dgm, rta_ctg_pip, rta_ctg_fp, rta_ctg_dgm, _, rta_reportes = carpetas_OP5(ruta_carpeta_nueva, nombre_bd,
+    _, rta_flw, rta_dgm, rta_ctg_pip, rta_ctg_fp, rta_ctg_dgm, _, rta_reportes = carpetas_OP6(ruta_carpeta_nueva, nombre_bd,
                                                                                             llave_contingencias)
     
     # --- SIMULACION ---
@@ -347,17 +364,17 @@ def opcion_DC_5(nombre_bd, ruta_carpeta_base, net, df_mline, df_mtrafo, df_deman
     else:
         _, _ = caso_base_escenarios (net, configuracion_red_base, df_mtrafo, df_mline, df_desp_TH, df_desp_ren, df_fechas,
                         Slacks, df_demanda, rta_flw, configuracion_estudio['reportes_cn_flujos'], rta_reportes, escenarios)
-        graficador_op5_rb(net, df_mline, df_mtrafo, df_demanda, df_desp_TH, df_desp_ren, Slacks, escenarios, rta_dgm)
+        graficador_op6_rb(net, df_mline, df_mtrafo, df_demanda, df_desp_TH, df_desp_ren, Slacks, escenarios, rta_dgm)
     
     if llave_contingencias:
         trafos_limpios = trafos_gen(net)
         configuracion_contingencias = Configuracion_Simulacion_Contingencias(nombre_estudio,
                                                             configuracion_estudio['exponente_n'])
-        contingencias_op5(escenarios, contingencias, configuracion_contingencias, net, df_mline, df_mtrafo, df_demanda, df_desp_TH,
+        contingencias_op7(escenarios, contingencias, configuracion_contingencias, net, df_mline, df_mtrafo, df_demanda, df_desp_TH,
                                     df_desp_ren, Slacks, datos_estudio, df_fechas, rta_ctg_fp, rta_ctg_pip, df_duraci,
                                     configuracion_estudio['nucleos'], configuracion_estudio['reportes_cont_flujos'], trafos_limpios)
         contingencias = identificacion_contingencia(net, configuracion_contingencias)
-        graficador_op5_ctg(net, df_mline, df_mtrafo, df_demanda,df_desp_TH, df_desp_ren, Slacks, escenarios,
+        graficador_op6_ctg(net, df_mline, df_mtrafo, df_demanda,df_desp_TH, df_desp_ren, Slacks, escenarios,
                         contingencias, rta_ctg_dgm)
 
 def obtencion_flujos_6(ejecutar_flujos, net, df_mline, df_mtrafo, df_demanda, df_desp_TH, df_desp_ren, Slacks, datos_estudio,
@@ -410,7 +427,7 @@ def archivos_contingencias(net, nombre_estudio, configuracion_estudio, contingen
                 trafos_limpios = trafos_gen(net)
                 configuracion_contingencias = Configuracion_Simulacion_Contingencias(
                     nombre_estudio, configuracion_estudio['exponente_n'])
-                contingencias_op5(
+                contingencias_op7(
                     escenarios, no_existen, configuracion_contingencias, net, df_mline, df_mtrafo, 
                     df_demanda, df_desp_TH, df_desp_ren, Slacks, datos_estudio, df_fechas, 
                     rta_ctg_fp, rta_ctg_pip, df_duraci, configuracion_estudio['nucleos'], 
@@ -427,7 +444,7 @@ def archivos_contingencias(net, nombre_estudio, configuracion_estudio, contingen
     print('='*80)
     return rta_ctg_fp, rta_ctg_pip
 
-def opcion_DC_6(nombre_bd, configuracion_estudio, rta_ctg_pip, rta_ctg_fp, df_cargabilidades, df_flujos, net, 
+def opcion_DC_7(nombre_bd, configuracion_estudio, rta_ctg_pip, rta_ctg_fp, df_cargabilidades, df_flujos, net, 
                 df_mline, df_mtrafo, df_demanda, df_desp_TH, df_desp_ren, Slacks, datos_estudio, df_fechas, df_duraci):
     nombre_estudio = f'{nombre_bd}({datetime.now().strftime(f'%H-%M')})'
     lista_elementos = net.line['name'].tolist() + net.trafo['name'].tolist()
@@ -453,20 +470,3 @@ def opcion_DC_6(nombre_bd, configuracion_estudio, rta_ctg_pip, rta_ctg_fp, df_ca
             
         else:
             return
-
-def opcion_DC_7(ruta_estudio, ruta_escenarios, nombre_bd, ruta_carpeta_base, net, df_demanda, df_desp_TH, df_desp_ren,
-                Slacks):
-    # CONFIGURACION INICIAL
-    configuracion_estudio_7 = config_estudio("opcion_7", ruta_estudio)
-    cambiar_ubicacion_logger_txt((ruta_estudio), 'Reporte ejecucion 7.txt')
-    if not Path(ruta_estudio) == Path(ruta_carpeta_base):
-        eliminar_carpeta(ruta_carpeta_base)
-    # LECTURA DE ESCENARIOS
-    df_p1, df_p2 = lectura_escenarios(ruta_escenarios)
-    if df_p1.empty or df_p2.empty:
-        e = 'Existe uno o ambos dataframe de escenario(s) vacio(s), por lo que no se mostraran los escenarios criticos'
-        logger.warning(e)
-    # FUNCION
-    rta_par, rta_ac = carpetas_OP7(ruta_estudio, nombre_bd)
-    menu_vinculacion_pf(df_p1, df_p2, ruta_escenarios, rta_par, rta_ac, net, df_demanda, df_desp_TH, df_desp_ren,
-                        Slacks, configuracion_estudio_7)

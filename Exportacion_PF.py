@@ -546,7 +546,7 @@ def importar_escenarios(pareo_syn, pareo_sta, pareo_cargas, df_p1, df_p2, app, d
     else:
         return True, pareo_cargas
 
-def menu_vinculacion_pf(df_p1, df_p2, ruta_escenarios, rta_par, rta_ac, net, df_demanda, df_desp_TH, df_desp_ren, Slacks,
+def menu_vinculacion_pf(df_p1, df_p2, rta_par, rta_ac, net, df_demanda, df_desp_TH, df_desp_ren, Slacks,
                         configuracion_estudio_7):
     # VINCULAMOS CON PF
     app = vinculacion_pf(configuracion_estudio_7)

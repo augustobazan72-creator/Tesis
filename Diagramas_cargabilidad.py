@@ -177,7 +177,7 @@ def graficador_op1 (net, df_mline, df_mtrafo, df_demanda,df_desp_TH, df_desp_ren
     logger.info('Diagramas de cargabilidad generados correctamente (Archivos.html).')
     print(f"{'='*80}")
 
-def graficador_op3_p1 (net, df_mline, df_mtrafo, df_demanda,df_desp_TH, df_desp_ren, Slacks,
+def graficador_op2_p1 (net, df_mline, df_mtrafo, df_demanda,df_desp_TH, df_desp_ren, Slacks,
                         lista_escenarios, rutas_anio):
     print('DIAGRAMAS DE CARGABILIDAD PARA ESCENARIOS CRITICOS (P1).')
     print(f"{'-'*80}")
@@ -192,7 +192,7 @@ def graficador_op3_p1 (net, df_mline, df_mtrafo, df_demanda,df_desp_TH, df_desp_
                         df_desp_ren, Slacks, ruta, auto_open, nombre)
     print(f"{'='*80}")
 
-def graficador_op3_p2 (net, df_mline, df_mtrafo, df_demanda, df_desp_TH, df_desp_ren, Slacks,
+def graficador_op2_p2 (net, df_mline, df_mtrafo, df_demanda, df_desp_TH, df_desp_ren, Slacks,
                         lista_completa, rutas_anio):
     print('DIAGRAMAS DE CARGABILIDAD PARA ESCENARIOS CRITICOS (P2).')
     print(f"{'-'*80}")
@@ -206,7 +206,7 @@ def graficador_op3_p2 (net, df_mline, df_mtrafo, df_demanda, df_desp_TH, df_desp
     logger.info('Diagramas del caso base terminados correctamente.\n')
     print(f"{'='*80}\n")
 
-def graficador_op5_rb(net, df_mline, df_mtrafo, df_demanda,df_desp_TH, df_desp_ren, Slacks, escenarios,
+def graficador_op6_rb(net, df_mline, df_mtrafo, df_demanda,df_desp_TH, df_desp_ren, Slacks, escenarios,
                         ruta_diagramas_cb):
     print(f'{'-'*80}')
     print('DIAGRAMAS DE CARGABILIDAD PARA ESCENARIOS ESPECIFICOS (CONDICION N).')
@@ -220,7 +220,7 @@ def graficador_op5_rb(net, df_mline, df_mtrafo, df_demanda,df_desp_TH, df_desp_r
     logger.info('Diagramas del caso base terminados correctamente.\n')
     print(f'{'='*80}\n')
 
-def graficador_op5_ctg(net, df_mline, df_mtrafo, df_demanda,df_desp_TH, df_desp_ren, Slacks, escenarios,
+def graficador_op6_ctg(net, df_mline, df_mtrafo, df_demanda,df_desp_TH, df_desp_ren, Slacks, escenarios,
                         contingencias, ruta_diagramas_cont):
     print(f'{'-'*80}')
     print('DIAGRAMAS DE CARGABILIDAD PARA ESCENARIOS Y CONTINGENCIAS ESPECIFICOS (CONDICION N-1).')

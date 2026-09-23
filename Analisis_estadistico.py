@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as mtick
 from pathlib import Path
 from concurrent.futures import ProcessPoolExecutor, as_completed
-from Rutas import carpetas_op3_individual
+from Rutas import carpetas_op2_individual
 from tqdm import tqdm
 import time
 import logging
@@ -504,7 +504,7 @@ def analisis_escenarios(df_desp_TH: pd.DataFrame, df_desp_ren: pd.DataFrame, df_
         dict_df = {'Demanda': df_dem, 'Generacion_Sincrona': df_sincronas, 'Generacion_Variable': df_renovables}
     rutas_anio = {}
     for id, year in enumerate(lista_years, start = 1):
-        ruta_yyyy, ruta_diagramas, ruta_graficas = carpetas_op3_individual(rta_esc, id, year)
+        ruta_yyyy, ruta_diagramas, ruta_graficas = carpetas_op2_individual(rta_esc, id, year)
         rutas_anio[str(year)] = [ruta_yyyy, ruta_diagramas, ruta_graficas]
         for nombre, df in dict_df.items():
             df_aux = df[df['años'] == year].copy()

@@ -9,8 +9,8 @@ def menu_principal():
     print("                MENU PRINCIPAL (ANALSIS ELECTRICO DC).")
     print(f'{'='*80}')
     print("1. [DIAGNOSTICO] Diagnostico de la red de transmision (Completo).")
-    print("2. [REFUERZOS] Analisis de propuestas de refuerzos.")
-    print("3. [ESCENARIOS] Identificacion de escenarios criticos.")
+    print("2. [ESCENARIOS] Identificacion de escenarios criticos.")
+    print("3. [REFUERZOS] Analisis de propuestas de refuerzos.")
     print("4. [DIGSILENT] Importar un escenario critico a DigSilent Power Factory.")
     print(f'{"-"*80}')
     print('Herramientas adicionales')
@@ -133,7 +133,7 @@ def menu_costos_usuario():
     print('     Q_n      |  Costo |  ...  |  Costo |')
     print(f'{'-'*80}')
 
-def estudio_previo_OP3()-> bool:
+def estudio_previo_OP2()-> bool:
     while True:
         print(f'{'='*80}')
         opcion = input_log('Se realizo algun estudio previo (Diagnostico de la red de transmision)? (S/N):').strip().lower()
@@ -179,7 +179,7 @@ def menu_seleccion_areas():
         else:
             print('Opcion no valida. Elija una opcion en el rango [1-2].')
 
-def opcion3_predeterminada()-> bool:
+def opcion2_predeterminada()-> bool:
     print(f'{'='*80}')
     print('CONFIGURACION DE AÑOS Y AREAS.')
     print(f'{'='*80}')

@@ -972,7 +972,7 @@ def contingencias_refuerzos(config_sim_contingencias, net, df_mline, df_mtrafo,d
     print(f"{'='*80}")
     return indice_severidad
 
-def contingencias_op5(escenarios, contingencias, config_sim_contingencias, net, df_mline, df_mtrafo, df_demanda, df_desp_TH,
+def contingencias_op7(escenarios, contingencias, config_sim_contingencias, net, df_mline, df_mtrafo, df_demanda, df_desp_TH,
                                     df_desp_ren, Slacks, datos_estudio, df_fechas, rta_ctg_fp, rta_ctg_pip, df_duraci,
                                     nucleos, reportes_cont_flujos, trafos_limpios):
     print(f"{'='*80}")

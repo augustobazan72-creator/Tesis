@@ -213,6 +213,12 @@ config_predeterminada = {
         "numero_refuerzos_automaticos": 11
     },
     "opcion_2": {
+        "reporte_red" : 1,
+        "reporte_topologia" : False,
+        "nucleos" : hilos_procesamiento(),
+        "reportes_cn_flujos" : True,
+    },
+    "opcion_3": {
         "elementos_monitoreo" : 3,
         "reporte_red" : 1,
         "reportes_cn_flujos" : True,
@@ -230,13 +236,10 @@ config_predeterminada = {
         "guardar_reporte_economico": True,
         "guardar_reporte_tecnico_economico": True
     },
-    "opcion_3": {
-        "reporte_red" : 1,
-        "reporte_topologia" : False,
-        "nucleos" : hilos_procesamiento(),
-        "reportes_cn_flujos" : True,
+    "opcion_4": {
+        "ruta_pf" : rf"C:\Program Files\DIgSILENT\PowerFactory 2024\Python\3.12",
     },
-    "opcion_5": {
+    "opcion_6_7": {
         "exponente_n" : 40,
         "reportes_cn_flujos" : True,
         "reporte_topologia" : True,
@@ -244,17 +247,6 @@ config_predeterminada = {
         "reportes_cont_flujos" : True,
         "nucleos" : hilos_procesamiento(),
     },
-        "opcion_6": {
-        "exponente_n" : 40,
-        "reportes_cn_flujos" : True,
-        "reporte_topologia" : False,
-        "generar_graficas" : False,
-        "reportes_cont_flujos" : True,
-        "nucleos" : hilos_procesamiento(),
-    },
-        "opcion_7": {
-        "ruta_pf" : rf"C:\Program Files\DIgSILENT\PowerFactory 2024\Python\3.12",
-    }
     
 }
 
@@ -344,7 +336,7 @@ def monitoreo_contingencias()-> int:
             print('Opcion no valida, intente de nuevo.')
 
 
-def config_estudio_2(op_estudio: str, ruta_config: str | Path) -> dict:
+def config_estudio_3(op_estudio: str, ruta_config: str | Path) -> dict:
     while True:
         x = input_log('Usar configuracion predeterminada (s/n):').strip().lower()
         print(f"{'-'*80}")
