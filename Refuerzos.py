@@ -15,7 +15,7 @@ from datetime import timedelta
 from haversine import haversine, Unit
 from Analisis_estadistico import (analisis_caso_base, percentiles_cb, constantes, ALTO, ANCHO, DPI,
                                 aplicar_tema_light, analisis_contingencias, indice_cond_n)
-from Red_pandapower import lista_doble_terna, reporte_red, trafos_gen
+from Red_pandapower import lista_doble_terna, reporte_red, trafos_gen, lista_paralelo
 from Motor_DC import (Configuracion_Simulacion, Configuracion_Simulacion_Contingencias, caso_base_completo,
                     contingencias_refuerzos)
 from Rutas import creacion_carpetas_refuerzos
@@ -75,34 +75,44 @@ def elementos_criticos (net, analisis_componentes, ranking_contingencias_cb):
     print(f'{'-'*80}')
     print('IDENTIFICANDO ELEMENTOS CRITICOS')
     print(f'{'-'*80}')
-    # PREPARANDO LISTAS
-    elementos_condicion_n = analisis_componentes['Nombre_Componente'].tolist()[:19]
-    if not elementos_condicion_n:
-        e_1 = 'La columna de [Nombre_Componente] no retorna valores.'
-        logger.error(e_1)
-        e_2 = 'Revisar que el df de analisis de componentes tenga datos'
-        raise ValueError(e_2)
-    df_cont = ranking_contingencias_cb.query('Ind_Sev >= 1')
-    elementos_contingencias = df_cont['Contingencia'].tolist()[:19]
-    if not elementos_contingencias:
-        e_1 = 'La columna de [Contingencia] no retorna valores (Porque no hay datos o No se tienen contingencias con i_sev >= 1).'
-        logger.error(e_1)
-        e_2 = 'Revisar que el df de ranking de contingencias.'
-        raise ValueError(e_2)
-    elementos_criticos = set(elementos_condicion_n + elementos_contingencias)
+    
+    # LISTA DE ELEMENTOS CRITICOS 
+    df_criticos = analisis_componentes.copy()
+    df_criticos = df_criticos[df_criticos['P_1%']>=100].copy()
+    logger.info('Se filtraran los elementos criticos con "P_1%" > 100%.')
+    if len(df_criticos['Nombre_Componente']) < 5:
+        logger.info('No se encontraron los suficentes elementos por lo que se usara "P_1%" > 90%')
+        df_criticos = df_criticos[df_criticos['P_1%']>=90].copy()
+        componentes_criticos = set(df_criticos['Nombre_Componente'].tolist())
+    else:
+        componentes_criticos = set(df_criticos['Nombre_Componente'].tolist())
+    logger.info(f'Se identificaron {len(componentes_criticos)} en condicion normal.')
+
+    # LISTA DE ELEMENTOS SEVEROS
+    df_cont = ranking_contingencias_cb.copy()
+    indices = np.sort(df_cont['Ind_Sev'].values)
+    quartil_1 = np.percentile(indices, 25)
+    quartil_3 = np.percentile(indices, 75)
+    indice_ref = quartil_3 + 3 * (quartil_3-quartil_1)
+    df2 = df_cont[df_cont['Ind_Sev'] > indice_ref].copy()
+    elementos_severos = set(df2['Contingencia'].tolist())
+    if len(elementos_severos) == 0:
+        indice_ref = quartil_3 + 1.5 * (quartil_3-quartil_1)
+        df2 = df_cont[df_cont['Ind_Sev'] > indice_ref].copy()
+        elementos_severos = set(df2['Contingencia'].tolist())
+        if len(elementos_severos) == 0:
+            df_sev = df_cont[df_cont['Ind_Sev']>1].copy()
+            elementos_severos = set(df_sev['Contingencia'].tolist())
+    logger.info(f'Se identificaron {len(elementos_severos)} contingencias severas.')
+
+    # LISTA FINAL
+    elementos_criticos = componentes_criticos.union(elementos_severos)
     lineas_2t = lista_doble_terna(net)
-    # PROCESAMIENTO DE LISTAS
-    elementos_criticos_filtrados = elementos_criticos.difference(lineas_2t)
-    elementos_criticos_filtrados = list(elementos_criticos_filtrados)
-    if len(elementos_criticos_filtrados) > 30:
-        elementos_criticos_filtrados = elementos_criticos_filtrados[:29]
-    logger.info(f'El analisis de refuerzos se hara para {len(elementos_criticos_filtrados)} elementos criticos,\n{elementos_criticos}')
-    lineas, trafos =  [], []
-    for elemento in elementos_criticos_filtrados:
-        if str(elemento[0:3]) != str(elemento[6:9]):
-            lineas.append(elemento)
-        else: 
-            trafos.append(elemento)
+    elementos_criticos_filtro_1 = elementos_criticos.difference(lineas_2t)
+    trafos_paralelo = lista_paralelo(net)
+    elementos_criticos_filtro_2 = elementos_criticos_filtro_1.difference(trafos_paralelo)
+    elementos_criticos_filtrados = list(elementos_criticos_filtro_2)
+    logger.info(f'El analisis de refuerzos se hara para {len(elementos_criticos_filtrados)} elementos criticos,\n{elementos_criticos_filtrados}')
     """
     No se hace ningun filtrado a los trafos porque estos ya se filtraron antes de ejecutar el analisis
     tanto estadistico como de contingencias

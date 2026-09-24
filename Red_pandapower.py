@@ -649,3 +649,14 @@ def lista_doble_terna(net):
     else:
         logger.info(f'Se  identificaron {len(lista_2t)} lineas doble terna,\n{lista_2t}.')
     return lista_2t
+
+def lista_paralelo(net):
+    trafos = net.trafo.copy()
+    trafos['par_buses'] = trafos.apply(lambda row: tuple(sorted([row['hv_bus'], row['lv_bus']])), axis=1)
+    trf_paralelo = trafos.groupby('par_buses').tail(-1)
+    lista_paralelo = set(trf_paralelo['name'].dropna().tolist())
+    if not lista_paralelo:
+        logger.info('No se identificaron trafosen paralelo en el sistema.')
+    else:
+        logger.info(f'Se  identificaron {len(lista_paralelo)} lineas doble terna,\n{lista_paralelo}.')
+    return lista_paralelo

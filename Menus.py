@@ -17,7 +17,7 @@ def menu_principal():
     print(f'{"-"*80}')
     print("5. [DIAGNOSTICO] Diagnostico de la red de transmision (Reducido).")
     print("6. [FLUJOS] Ejecutar flujos de potencia en DC solo para escenarios y/o contingencias seleccionadas.")
-    print("7. [GRAFICADOR] Generar graficas de flujos y cargabilidades de componentes.")
+    print("7. [GRAFICADOR] Generar graficas de flujos, cargabilidades y PIp de componentes.")
     print("8. Salir")
     print(f'{'-'*80}')
 

@@ -94,7 +94,7 @@ def opcion_DC_diagnostico(df_mtrafo: df, df_demanda: df, df_desp_TH: df, df_desp
         ref_propuestos = analisis_ref_popuestos(net, analisis_componentes, ranking_contingencias, rta_prop,
                         df_mline, df_mtrafo, df_demanda, df_desp_TH,df_desp_ren, Slacks, datos_estudio, df_fechas, 
                         df_duraci, parametros_red, configuracion_estudio['exponente_n'], nucleos,
-                        df_cargabilidades, configuracion_estudio['numero_refuerzos_automaticos'], trafos_limpios)
+                        df_cargabilidades, configuracion_estudio['numero_elementos_monitoreo'], trafos_limpios)
         resultados_refuerzos_propuestos(resultados, ref_propuestos)
     return ruta_base
 

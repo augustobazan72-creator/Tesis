@@ -210,7 +210,7 @@ config_predeterminada = {
         "nucleos" : hilos_procesamiento(),
         "generar_graficas" : True,
         "reportes_cont_flujos" : False,
-        "numero_refuerzos_automaticos": 11
+        "numero_elementos_monitoreo": 11
     },
     "opcion_2": {
         "reporte_red" : 1,
@@ -229,7 +229,7 @@ config_predeterminada = {
         "reportes_cont_flujos" : True,
         "Factor_dolar" : 1.3118, 
         "Factor_inflacion" : .62,
-        "numero_refuerzos_automaticos": 3,
+        "numero_elementos_monitoreo": 3,
         "modo_elementos_monitoreo": 1,
         "n_elementos_sensibles": 10,
         "guardar_reportes_contingencias": False,
