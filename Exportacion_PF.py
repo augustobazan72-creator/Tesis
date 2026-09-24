@@ -359,10 +359,10 @@ def importar_gen_estatica(pareo_sta, gsta_pf, escenario, df_desp_ren):
         valor.SetAttribute('usetp', U_INICIAL)
         if int(float(p)) == 0:
             valor.SetAttribute('outserv', 1)
-            valor.SetAttribute('pgini', 0)
+            valor.SetAttribute('pgini', float(p)) #! ESTO SE ESTA MODIFICANDO
         else:
-            valor.SetAttribute('outserv', 0)
-            valor.SetAttribute('ip_ctrl', 0)
+            # valor.SetAttribute('outserv', 0)
+            # valor.SetAttribute('ip_ctrl', 0) #! ESTO SE ESTA MODIFICANDO
             valor.SetAttribute('pgini', float(p))
     logger.info('Se cargo exitosamente los despachos de centrales renovables (SDDP) a las unidades estaticas (PF).')
     logger.info(f'Se asigno tension inicial de {U_INICIAL} [p.u] a todas las uniudades estaticas.')
@@ -463,19 +463,21 @@ def importar_gen_sincrona(pareo_syn, gsyn_pf, escenario, df_desp_TH):
     pareo_gen_syn.set_index(['PF'], inplace=True)
     for llave, valor in gsyn_pf.items():
         p = pareo_gen_syn.at[llave, 'Desp']
-        valor.SetAttribute('ip_ctrl', 0)
+        # valor.SetAttribute('ip_ctrl', 0)
         valor.SetAttribute('usetp', U_INICIAL)
         if int(float(p)) == 0:
-            valor.SetAttribute('outserv', 1)
-            valor.SetAttribute('pgini', 0)
+            # valor.SetAttribute('outserv', 1) #! ESTO SE ESTA MODIFICANDO
+            valor.SetAttribute('pgini', float(p)) #! ESTO SE ESTA MODIFICANDO
         else:
-            valor.SetAttribute('outserv', 0)
+            # valor.SetAttribute('outserv', 0) #! ESTO SE ESTA MODIFICANDO
             valor.SetAttribute('pgini', float(p))
+            """
             if llave == maquina_slack:
                 valor.SetAttribute('pgini', 0)
                 valor.SetAttribute('ip_ctrl', 1)
                 valor.SetAttribute('usetp', 1)
                 valor.SetAttribute('phiini', 0)
+                """
     logger.info('Se cargo exitosamente los despachos sincronos SDDP a las unidades sincronas en PF.')
     logger.info(f'Se asigno tension inicial de {U_INICIAL} [p.u] a todas las uniudades sincronas que no son referencia.')
     logger.info(f'Se asigno tension inicial de 1.0 [p.u] y angulo de 0° a la unidad de referencia.')
@@ -512,7 +514,7 @@ def importar_escenarios(pareo_syn, pareo_sta, pareo_cargas, df_p1, df_p2, app, d
         pareo_cargas = importar_demanda(escenario, pareo_cargas, df_demanda, cargas_pf)
         pareo_sta = importar_gen_estatica(pareo_sta, gsta_pf, escenario, df_desp_ren)
         pareo_syn = importar_gen_sincrona(pareo_syn, gsyn_pf, escenario, df_desp_TH)
-        ejecutar_flujo_AC(app)
+        ejecutar_flujo_DC(app)
         return False, pareo_cargas
     
     elif opcion == '2':

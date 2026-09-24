@@ -80,7 +80,7 @@ if __name__ == '__main__':
                 datos_estudio,  Slacks, df_duraci, ruta_carpeta_base, nombre_bd, False, parametros_red, net)
             else:
                 ruta_diagnostico = pedir_ruta(ruta_bd)
-                cambiar_ubicacion_logger_txt(ruta_diagnostico, 'Reporte ejecucion 3.txt')
+                cambiar_ubicacion_logger_txt(ruta_diagnostico.parent, 'Reporte ejecucion 3.txt')
                 if not Path(ruta_carpeta_base) == Path(ruta_diagnostico).parent:
                     eliminar_carpeta(ruta_carpeta_base)
             df_cargabilidades_rbase, ranking_contingencias_rb = lectura_estudio_previo(ruta_diagnostico)

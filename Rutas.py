@@ -117,7 +117,7 @@ def carpetas_OP2_sep(ruta_carpeta_base: str | Path, nombre_bd : str):
 
 def carpetas_OP2_cep(ruta_carpeta_base: str | Path, nombre_bd : str):
     ruta_carpeta_base = Path(ruta_carpeta_base)
-    ruta_base = ruta_carpeta_base / f"Op3_{nombre_bd}_(Esc.Criticos)"
+    ruta_base = ruta_carpeta_base / f"Op2_{nombre_bd}_(Esc.Criticos)"
     rta_esc = ruta_base / "1. Escenarios criticos"
     rta_infred = ruta_base / "2. Informacion de la red"
     subcarpetas = [
@@ -279,7 +279,7 @@ def ruta_escenarios_criticos (nombre_bd):
     print('LECTURA DE ESCENARIOS CRITICOS')
     while True:
         print('='*80)
-        ruta_estudio = input_log('Ingrese la ruta de la carpeta donde se almaceno el estudio de escenarios criticos ["q" para volver al menu]:\n').strip()
+        ruta_estudio = input_log('Ingrese la ruta de la carpeta del diagnostico donde se almaceno el estudio de escenarios criticos ["q" para volver al menu]:\n').strip()
         ruta_estudio = ruta_estudio.replace('"', '').replace("'", "")
         if ruta_estudio.lower() == 'q':
             return ""

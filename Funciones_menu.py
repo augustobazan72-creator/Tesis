@@ -393,7 +393,7 @@ def obtencion_flujos_6(ejecutar_flujos, net, df_mline, df_mtrafo, df_demanda, df
         ruta_carpeta_principal = ruta_diagnostico
         rta_ctg_pip = ruta_diagnostico / '2. Contingencias/1. Reportes_PIp'
         rta_ctg_fp= ruta_diagnostico / '2. Contingencias/2. Flujos_cargabilidades(n-1)'
-        configuracion_estudio_6 = config_estudio("opcion_6", ruta_carpeta_principal.parent)
+        configuracion_estudio_6 = config_estudio("opcion_6_7", ruta_carpeta_principal.parent)
         cambiar_ubicacion_logger_txt((ruta_carpeta_principal.parent), 'Reporte ejecucion 6.txt')
         if not Path(ruta_carpeta_base) == Path(ruta_diagnostico).parent:
             eliminar_carpeta(ruta_carpeta_base)

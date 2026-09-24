@@ -542,7 +542,7 @@ def agregar_barras(net_copy, df_filtrado, nombre_propuesta):
             if pd.isna(bus['Longitud']) or pd.isna(bus['Latitud']):
                 coordenadas = None
             else:
-                coordenadas = (bus['Longitud'], bus['Latitud'])
+                coordenadas = (float(bus['Longitud']), float(bus['Latitud']))
             id_bus = pp.create_bus(
                 net_copy,
                 name=bus['Nombre_refuerzo'],
@@ -550,6 +550,10 @@ def agregar_barras(net_copy, df_filtrado, nombre_propuesta):
                 in_service=True,
                 type='b', 
                 geodata=coordenadas)
+            if coordenadas is not None:
+                lon, lat = coordenadas
+                net_copy.bus_geodata.loc[id_bus, 'x'] = lon
+                net_copy.bus_geodata.loc[id_bus, 'y'] = lat
             
             df = df_filtrado[df_filtrado['Nombre_refuerzo'] != bus['Nombre_refuerzo']].copy()
             barra, un = str(bus['Nombre_refuerzo']).split('-')
@@ -616,6 +620,7 @@ def elementos_monitoreo_alternativas(df_cargabilidades_base: pd.DataFrame, df_ca
         elementos_sensibles.extend(lista_monitoreo)
         return list(set(elementos_sensibles))
     logger.info(f'Los {n_elementos} elementos de monitoreo para {nombre} son:\n{elementos_sensibles}')
+    elementos_sensibles.extend(lista_monitoreo)
     return elementos_sensibles
 
 def reporte_tecnico_alternativa(df_comparativa, ranking_contingencias_rb, indice_severidad_ref, nombre_propuesta,
@@ -869,9 +874,9 @@ def refuerzos_usuario(net, df_refuerzos, df_cargabilidades_rbase, ranking_contin
     # CARTERA DE PROYECTOS ---
     cartera= set(df_refuerzos['Cartera'].tolist())
     for alternativas in cartera:
-        print(f'{'='*60}')
+        print(f'{'='*80}')
         print(f'Analisis de refuerzos propuestos para la cartera de: {alternativas}')
-        print(f'{'='*60}')
+        print(f'{'='*80}')
         # RUTA CARTERA
         ruta_base_cartera = rta_cart/alternativas
         ruta_base_cartera.mkdir(parents=True, exist_ok=True)
@@ -887,10 +892,9 @@ def refuerzos_usuario(net, df_refuerzos, df_cargabilidades_rbase, ranking_contin
         if len (lista_monitoreo)>1:
             elemento_monitoreo, isev_monitoreo_red_base = lista_monitoreo_mayor_1 (lista_isev, lista_monitoreo, ranking_contingencias_rb)
         else:
-            elemento_monitoreo, isev_monitoreo_red_base = verificar_elem_monitoreo (lista_isev, lista_monitoreo, ranking_contingencias_rb)
+            elemento_monitoreo, isev_monitoreo_red_base = verificar_elem_monitoreo (lista_isev, lista_monitoreo[0], ranking_contingencias_rb)
         fila_1 = {'Alternativa':'RB', 'IS(n)':indince_red_base, 'Elemento de monitoreo': elemento_monitoreo,
                         'IS (n-1)':isev_monitoreo_red_base, 'Costo total $': '-', 'Fecha (n)': '-', 'Fecha (n-1)': '-'}
-        
         # RESULTADOS POR CARTERA
         presentacion_resultados = []
         df_analisis = []
@@ -963,7 +967,8 @@ def refuerzos_usuario(net, df_refuerzos, df_cargabilidades_rbase, ranking_contin
             indice_ref, _ = indice_cond_n(df_cargabilidades_ref, df_duraci, exponente_n_pip, horas_serie)
             
             # CONDICION N-1 (CONTINGENCIAS)
-            lista_sensibles = list(set(lista_sensibles) & set(lista_isev))
+            lista_sensibles.append(elemento_monitoreo)
+            lista_sensibles = list(set(lista_sensibles) & set(lista_isev)) 
             indice_severidad_ref = contingencias_refuerzos(config_sim_cont, net_copy, df_mline, df_mtrafo, 
                         df_demanda, df_desp_TH, df_desp_ren, Slacks, datos_estudio, df_fechas, ruta_pip,
                         df_duraci, nucleos, lista_sensibles)

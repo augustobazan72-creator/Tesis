@@ -190,6 +190,7 @@ def diagrama_elementos_criticos(net, analisis_componentes: pd.DataFrame, ranking
     quartil_3 = np.percentile(indices, 75)
     indice_ref = quartil_3 + 1.5 * (quartil_3-quartil_1)
     df2 = ranking_contingencias[ranking_contingencias['Ind_Sev'] > indice_ref].copy()
+    df2 = df2.query('Ind_Sev > 1')
     criticos_contingencias = set(df2['Contingencia'].tolist())
     # listas de elementos a resaltar
     criticos = criticos_condicion_n.difference(criticos_contingencias)
