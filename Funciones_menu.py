@@ -249,7 +249,8 @@ def opcion_DC_2(df_flujos, rta_base, rta_esc, rta_infred, df_fechas, nombre_bd, 
                         lista_escenarios, rutas_anio)
     
     # --- ANALISIS DE FLUJOS (INTERCONEXIONES) ---
-    lista_completa, df_escenarios_p2 = analisis_flujos(df_flujos, interconexiones, rta_esc, rutas_anio, lista_yyyy)
+    lista_completa, df_escenarios_p2 = analisis_flujos(df_flujos, interconexiones, rta_esc, rutas_anio, lista_yyyy,
+                                                    df_fechas)
     graficador_op2_p2 (net, df_mline, df_mtrafo, df_demanda, df_desp_TH, df_desp_ren, Slacks,
                         lista_completa, rutas_anio)
     

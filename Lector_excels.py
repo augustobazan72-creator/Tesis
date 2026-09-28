@@ -308,10 +308,12 @@ def lectura_escenarios(ruta_escenarios):
     enteros = {'Etapa': int, 'Serie': int, 'Bloque': int, 'Año': int}
     # ESCENARIOS CRITICOS P1
     try:
-        encabezados = ['Escenarios criticos', 'Etapa', 'Serie', 'Bloque', 'MW', 'Año']
+        encabezados = ['Escenarios criticos', 'Etapa', 'Serie', 'Bloque', 'MW', 'Año', 'Fecha']
         df_p1 = pd.read_csv(escenarios_p1, usecols = encabezados, encoding = 'utf-8')
         df_p1 = df_p1.astype(enteros)
         df_p1['Escenarios criticos'] = df_p1['Escenarios criticos'].astype(str)
+        df_p1['Escenarios criticos'] = df_p1['Escenarios criticos'].str[:-4]
+        df_p1['Escenarios criticos'] = df_p1['Escenarios criticos'] + "_(" + df_p1['Fecha'] + ")"
         logger.info('Se leyo correctamente el archivo "Reporte_escenarios_criticos_p1.csv".')
     except:
         logger.warning('No se leyo correctamente el archivo "Reporte_escenarios_criticos_p1.csv".')
@@ -320,10 +322,10 @@ def lectura_escenarios(ruta_escenarios):
         df_p1 = pd.DataFrame()
     # ESCENARIOS CRITICOS P2
     strings = {'Interconexion' : str, 'Lectura' : str}
-    encabezados = ['Interconexion', 'Lectura', 'Año', 'Etapa', 'Serie', 'Bloque']
+    encabezados = ['Interconexion', 'Lectura', 'Año', 'Etapa', 'Serie', 'Bloque', 'Fecha']
     try:
         df_p2 = pd.read_csv(escenarios_p2, usecols = encabezados, encoding = 'utf-8')
-        df_p2['Escenarios criticos'] = df_p2['Interconexion'] +'_'+ df_p2['Lectura'] +'_'+ df_p2['Año'].astype(str)
+        df_p2['Escenarios criticos'] = df_p2['Interconexion'] +'_'+ df_p2['Lectura'] +'_('+ df_p2['Fecha'].astype(str) + ')'
         df_p2 = df_p2.astype(enteros)
         df_p2 = df_p2.astype(strings)
         logger.info('Se leyo correctamente el archivo "Reporte_escenarios_criticos_p2.csv".')

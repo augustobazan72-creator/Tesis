@@ -197,7 +197,7 @@ def escenarios_disponibles(df, llave):
         lista_escenarios = df['Escenarios criticos'].tolist()
     else:
         df['Año'] = df['Año'].astype(str)
-        df['escenarios'] = df['Interconexion'] + "_" + df['Lectura'] + "_" + df['Año']
+        df['escenarios'] = df['Interconexion'] + "_" + df['Lectura'] + "(" + df['Fecha'] + ")"
         lista_escenarios = df['escenarios'].tolist()
     for i, caso in enumerate(lista_escenarios, start=1):
         print(f"{i:>1}. {caso}")
@@ -250,9 +250,13 @@ def base_datos_pf(app):
 
 def importar_demanda(escenario, pareo_cargas, df_demanda, cargas_pf):
     print('DEMANDA\n')
-    # IDENTIFICACMOS LAS CARGAS ACTIVAS EN EL CASO
-    cargas = list(cargas_pf.keys())
-    df_cargas_activas = pd.DataFrame(cargas, columns=['PF'])
+    # IDENTIFICAMOS LAS CARGAS ACTIVAS EN EL CASO
+    cargas = []
+    for llave, valor in cargas_pf.items():
+        p = valor.GetAttribute('plini')
+        x = [llave, p]
+        cargas.append(x)
+    df_cargas_activas = pd.DataFrame(cargas, columns=['PF', 'P_inicial'])
     # FILTRAMOS EL ESCENARIO (DESPACHO)
     df_demanda = df_demanda.copy()
     df_cargas = df_demanda.loc[[escenario]]
@@ -263,15 +267,16 @@ def importar_demanda(escenario, pareo_cargas, df_demanda, cargas_pf):
         df_cargas_activas = pd.merge(df_cargas_activas, pareo_cargas, on='PF', how='left')
         cargas_sddp = set(df_cargas_activas['SDDP'].tolist())
         demandas_pf = []
-        for carga in list(cargas_sddp): # ! REVISAR ASIGNACION DE DEMANDAS
-            df = df_cargas_activas[df_cargas_activas['SDDP'] == carga]
-            num_demandas = len(df)
+        for carga in list(cargas_sddp):
             demanda_sddp = float(df_cargas[carga].item())
-            demanda_pf = demanda_sddp / num_demandas
-            x = [carga, demanda_pf]
-            demandas_pf.append(x)
-        df_demandas_pf = pd.DataFrame(demandas_pf, columns = ['SDDP', 'MW_pf'])
-        df_pareo = pd.merge(df_cargas_activas, df_demandas_pf, on = 'SDDP', how = 'left')
+            df = df_cargas_activas[df_cargas_activas['SDDP'] == carga].copy()
+            potencia_total = df['P_inicial'].sum()
+            df['FPA'] = df['P_inicial'] / potencia_total
+            df['P_asig'] = df['FPA'] * demanda_sddp / 1.025
+            df = df[['PF', 'P_asig']].copy()
+            demandas_pf.append(df)
+        df_demandas_pf = pd.concat(demandas_pf, ignore_index= True)
+        df_pareo = pd.merge(df_cargas_activas, df_demandas_pf, on = 'PF', how = 'left')
         # IDENTIFICAMOS QUE NO HAYAN CARGAS SIN POTENCIA ASIGNADA
         hay_nulos = df_pareo['SDDP'].isna().any()
         if hay_nulos:
@@ -300,9 +305,12 @@ def importar_demanda(escenario, pareo_cargas, df_demanda, cargas_pf):
     # IMPORTAMOS LA DEMANDA A PF
     df_pareo.set_index(['PF'], inplace=True)
     for llave, valor in cargas_pf.items():
-        p = df_pareo.at[llave, 'MW_pf']
+        p = df_pareo.at[llave, 'P_asig']
+        # Modificamos los parametros de las cargas
         valor.SetAttribute('plini', float(p))
-    logger.info('Se importo la demanda SDDP a las cargas en PF correctamente.')
+        valor.SetAttribute('outserv', 0)
+        valor.SetAttribute('scale0', 1)
+    logger.info('Se importo la demanda SDDP a las cargas en PF correctamente.') 
     print('-'*80)
     return pareo_cargas
 
@@ -356,14 +364,13 @@ def importar_gen_estatica(pareo_sta, gsta_pf, escenario, df_desp_ren):
     pareo_gen_sta.set_index(['PF'], inplace=True)
     for llave, valor in gsta_pf.items():
         p = pareo_gen_sta.at[llave, 'MW_pf']
+        num_unidades = valor.GetAttribute('ngnum')
+        p_recalculada = float(p)/num_unidades
+        # MODIFICAMOS PARAMETROS DE GENERADORES ESTATICOS
+        valor.SetAttribute('outServPzero', 1)
         valor.SetAttribute('usetp', U_INICIAL)
-        if int(float(p)) == 0:
-            valor.SetAttribute('outserv', 1)
-            valor.SetAttribute('pgini', float(p)) #! ESTO SE ESTA MODIFICANDO
-        else:
-            # valor.SetAttribute('outserv', 0)
-            # valor.SetAttribute('ip_ctrl', 0) #! ESTO SE ESTA MODIFICANDO
-            valor.SetAttribute('pgini', float(p))
+        valor.SetAttribute('pgini', p_recalculada)
+        valor.SetAttribute('ip_ctrl', 0)
     logger.info('Se cargo exitosamente los despachos de centrales renovables (SDDP) a las unidades estaticas (PF).')
     logger.info(f'Se asigno tension inicial de {U_INICIAL} [p.u] a todas las uniudades estaticas.')
     print('-'*80)
@@ -456,6 +463,7 @@ def importar_gen_sincrona(pareo_syn, gsyn_pf, escenario, df_desp_TH):
     logger.info('Se repartio el despacho de centrales sincronas (SDDP) entre generadores sincronos (PF) correctamente.')
     # IDENTIFICACION DE MAQUINA SLACK
     df_slack = pareo_gen_syn[pareo_gen_syn['SDDP'] == central_slack].copy()
+    df_slack = df_slack[df_slack['Desp'] != 0]
     df_slack['Holgura'] = df_slack['P_max_MW'] - df_slack['Desp']
     maquina_slack = df_slack.loc[df_slack['Holgura'].idxmax(), 'PF']
     logger.info(f'La maquina slack es: {maquina_slack}.')
@@ -463,21 +471,18 @@ def importar_gen_sincrona(pareo_syn, gsyn_pf, escenario, df_desp_TH):
     pareo_gen_syn.set_index(['PF'], inplace=True)
     for llave, valor in gsyn_pf.items():
         p = pareo_gen_syn.at[llave, 'Desp']
-        # valor.SetAttribute('ip_ctrl', 0)
+        n_unidades = valor.GetAttribute('ngnum')
+        p_recalculada = float(p)/n_unidades
+        # MODIFICAMOS VALORES DE LOS GENERADORES PARA EL DESPACHO
         valor.SetAttribute('usetp', U_INICIAL)
-        if int(float(p)) == 0:
-            # valor.SetAttribute('outserv', 1) #! ESTO SE ESTA MODIFICANDO
-            valor.SetAttribute('pgini', float(p)) #! ESTO SE ESTA MODIFICANDO
-        else:
-            # valor.SetAttribute('outserv', 0) #! ESTO SE ESTA MODIFICANDO
-            valor.SetAttribute('pgini', float(p))
-            """
-            if llave == maquina_slack:
-                valor.SetAttribute('pgini', 0)
-                valor.SetAttribute('ip_ctrl', 1)
-                valor.SetAttribute('usetp', 1)
-                valor.SetAttribute('phiini', 0)
-                """
+        valor.SetAttribute('outserv', 0)
+        valor.SetAttribute('ip_ctrl', 0)
+        valor.SetAttribute('outServPzero', 1)
+        valor.SetAttribute('pgini', p_recalculada)
+        if llave == maquina_slack:
+            valor.SetAttribute('ip_ctrl', 1)
+            valor.SetAttribute('usetp', 1)
+            valor.SetAttribute('phiini', 0)
     logger.info('Se cargo exitosamente los despachos sincronos SDDP a las unidades sincronas en PF.')
     logger.info(f'Se asigno tension inicial de {U_INICIAL} [p.u] a todas las uniudades sincronas que no son referencia.')
     logger.info(f'Se asigno tension inicial de 1.0 [p.u] y angulo de 0° a la unidad de referencia.')

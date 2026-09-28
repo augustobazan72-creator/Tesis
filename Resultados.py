@@ -277,20 +277,24 @@ def resultados_escenarios_criticos (df_escenarios_p1, df_escenarios_p2, rta_base
         archivo.write(f'\nEl analisis de escenarios se compone de 2 partes.')
         archivo.write(f'\n-> 1era Parte: Comprende escenarios de maxima y minima: generacion sincrona, generacion renovable')
         archivo.write(f'\n    y demanda, segun los años elegidos.')
-        archivo.write(f'\n\n[NUM] |       ESCENARIO CRITICO       | ETAPA | SERIE | BLOQUE')
+        archivo.write(f'\n\n[NUM] |       ESCENARIO CRITICO       | ETAPA | SERIE | BLOQUE | FECHA')
         for id, fila in df_escenarios_p1.iterrows():
             etapa = int(fila['Etapa'])
             serie = int(fila['Serie'])
             bloque = int(fila['Bloque'])
-            archivo.write(f'\n{id:>4}. | {fila['Escenarios criticos']:>29} | {etapa:>5} | {serie:>5} | {bloque:>6}')
+            fecha = fila['Fecha']
+            fecha_formateada = fecha.strftime(r'%Y-%m-%d')
+            archivo.write(f'\n{id:>4}. | {fila['Escenarios criticos']:>29} | {etapa:>5} | {serie:>5} | {bloque:>6} | {fecha_formateada:>10}')
         archivo.write(f'\n\n-> 2da Parte: Comprende escenarios de maxima y minima transferencia segun los años elegidos, entre')
         archivo.write(f'\n    grupos de elementos elegidos.')
-        archivo.write(f'\n\n[NUM] |      NOMBRE IDENTIFICADOR      | ETAPA | SERIE | BLOQUE |     MW    | ELEMENTOS')
+        archivo.write(f'\n\n[NUM] |      NOMBRE IDENTIFICADOR      | ETAPA | SERIE | BLOQUE |    FECHA     |     MW    | ELEMENTOS')
         for id, fila in df_escenarios_p2.iterrows():
             nombre = fila['Interconexion'] + '_' + fila['Lectura'] + '_' + str(fila['Año'])
             etapa = int(fila['Etapa'])
             serie = int(fila['Serie'])
             bloque = int(fila['Bloque'])
             potencia = formatear_resultados(round(float(fila['Total_MW']), 2), 5)
-            archivo.write(f'\n{id:>4}. | {nombre:>30} | {etapa:>5} | {serie:>5} | {bloque:>6} | {potencia:>9} | {fila['Elementos']}')
+            fecha = fila['Fecha']
+            fecha_formateada = fecha.strftime(r'%Y-%m-%d')
+            archivo.write(f'\n{id:>4}. | {nombre:>30} | {etapa:>5} | {serie:>5} | {bloque:>6} |  {fecha_formateada:>10}  |  {potencia:>9} | {fila['Elementos']}')
         archivo.write(f'\n{'='*80}\n')

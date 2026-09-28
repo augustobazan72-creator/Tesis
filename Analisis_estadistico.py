@@ -522,6 +522,8 @@ def analisis_escenarios(df_desp_TH: pd.DataFrame, df_desp_ren: pd.DataFrame, df_
     df_escenarios['MW'] = valor_mw
     df_escenarios['Año'] = tiempo
     lista_escenarios = list(zip(etapas, series, bloques, tiempo, escenarios_criticos))
+    df_escenarios = pd.merge(df_escenarios, df_fechas, how = 'left', on ='Etapa')
+    df_escenarios.drop(columns = ['Years'], inplace = True)
     ruta_salida = Path(rta_esc) / 'Reporte_escenarios_criticos_p1.csv'
     logger.info('Reporte de escenarios criticos generado correctamente')
     df_escenarios.to_csv(ruta_salida, index=False, encoding='utf-8')
@@ -529,7 +531,7 @@ def analisis_escenarios(df_desp_TH: pd.DataFrame, df_desp_ren: pd.DataFrame, df_
     return rutas_anio, lista_escenarios, df_escenarios
 
 def analisis_flujos(df_flujos: pd.DataFrame, interconexiones: dict, rta_esc: str|Path,
-                    rutas_anio: dict, lista_years: list):
+                    rutas_anio: dict, lista_years: list, df_fechas: pd.DataFrame):
     print(f"{'='*80}")
     print('ANALISIS DE ESCENARIOS CRITICOS (P2).')
     print(f"{'='*80}")
@@ -601,6 +603,8 @@ def analisis_flujos(df_flujos: pd.DataFrame, interconexiones: dict, rta_esc: str
             continue
     # Generacion del DataFrame final
     df_res = pd.DataFrame(lista_res)
+    df_res = pd.merge(df_res, df_fechas, how='left', on= 'Etapa')
+    df_res.drop(columns=['Years'], inplace = True)
     df_res.to_csv((Path(rta_esc)/'Reporte_escenarios_criticos_p2.csv'), index=False, encoding='utf-8')
     logger.info('El reporte de escenarios criticos (P2) se genero correctamente.')
     # Extraemos los escenarios para los diagramas
