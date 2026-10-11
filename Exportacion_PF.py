@@ -252,15 +252,15 @@ def importar_demanda(escenario, pareo_cargas, df_demanda, cargas_pf):
     print('DEMANDA\n')
     # IDENTIFICAMOS LAS CARGAS ACTIVAS EN EL CASO
     cargas = []
-    for llave, valor in cargas_pf.items():
-        p = valor.GetAttribute('plini')
-        x = [llave, p]
-        cargas.append(x)
-    df_cargas_activas = pd.DataFrame(cargas, columns=['PF', 'P_inicial'])
+    for llave, _ in cargas_pf.items():
+        cargas.append(llave)
+    df_cargas_activas = pd.DataFrame(cargas, columns=['PF'])
     # FILTRAMOS EL ESCENARIO (DESPACHO)
     df_demanda = df_demanda.copy()
     df_cargas = df_demanda.loc[[escenario]]
     logger.info('Se filtaron las demandas (SDDP) segun el escenario.')
+    demanda_total_sddp = df_cargas.sum(axis = 1).values[0]
+    logger.info(f'La demanda total para este escenario es de: {demanda_total_sddp:.2f} [MW]')
     # ASIGNACION DE DEMANDAS POR CARGAS
     while True:
         # FILTRAMOS LAS CARGAS ACTIVAS EN EL CASO DE ESTUDIO
@@ -270,9 +270,8 @@ def importar_demanda(escenario, pareo_cargas, df_demanda, cargas_pf):
         for carga in list(cargas_sddp):
             demanda_sddp = float(df_cargas[carga].item())
             df = df_cargas_activas[df_cargas_activas['SDDP'] == carga].copy()
-            potencia_total = df['P_inicial'].sum()
-            df['FPA'] = df['P_inicial'] / potencia_total
-            df['P_asig'] = df['FPA'] * demanda_sddp / 1.025
+            numero_cargas = len(df['PF'].tolist())
+            df['P_asig'] = demanda_sddp /(1 * numero_cargas)  #! Verificar factores de sensibilidad si es que influyen
             df = df[['PF', 'P_asig']].copy()
             demandas_pf.append(df)
         df_demandas_pf = pd.concat(demandas_pf, ignore_index= True)
@@ -298,7 +297,7 @@ def importar_demanda(escenario, pareo_cargas, df_demanda, cargas_pf):
             pareo_cargas = pd.concat([df_pareo, df_nuevos_pareos], ignore_index=True)
             pareo_cargas = pareo_cargas.dropna({'SDDP'})
             pareo_cargas = pareo_cargas[['PF', 'SDDP']].copy()
-            logger.info('Se actualizo correctamente el pareo de nombres')
+            logger.info('Se actualizo correctamente el pareo de nombres.')
             logger.info('No se olvide actualizar el archivo excel de pareo.')
         else: break
     logger.info('Se repartio correectamente la demanda por barra (SDDP) entre las cargas asigandas a dicha barra (PF).')
@@ -310,7 +309,9 @@ def importar_demanda(escenario, pareo_cargas, df_demanda, cargas_pf):
         valor.SetAttribute('plini', float(p))
         valor.SetAttribute('outserv', 0)
         valor.SetAttribute('scale0', 1)
-    logger.info('Se importo la demanda SDDP a las cargas en PF correctamente.') 
+    logger.info('Se importo la demanda SDDP a las cargas en PF correctamente.')
+    demanda_importada_pf = df_pareo['P_asig'].sum()
+    logger.info(f'Se importaron: {demanda_importada_pf:.2f} [MW].')
     print('-'*80)
     return pareo_cargas
 
@@ -322,6 +323,8 @@ def importar_gen_estatica(pareo_sta, gsta_pf, escenario, df_desp_ren):
     df_despacho = df_desp_ren.copy()
     df_despacho = df_despacho.loc[[escenario]]
     logger.info('Se filtraron los despachos de centrales renovables (SDDP) segun el escenario.')
+    desp_ren_total_sddp = df_despacho.sum(axis = 1).values[0]
+    logger.info(f'La generacion variable para este escenario es de: {desp_ren_total_sddp:.2f} [MW]')
     while True:
         # REPARTIMOS EL DESPACHO ESTATICO
         df_gen_sta_activa = pd.merge(df_gen_sta_activa, pareo_sta, on='PF', how='left')
@@ -373,6 +376,8 @@ def importar_gen_estatica(pareo_sta, gsta_pf, escenario, df_desp_ren):
         valor.SetAttribute('ip_ctrl', 0)
     logger.info('Se cargo exitosamente los despachos de centrales renovables (SDDP) a las unidades estaticas (PF).')
     logger.info(f'Se asigno tension inicial de {U_INICIAL} [p.u] a todas las uniudades estaticas.')
+    despacho_importado_pf = pareo_gen_sta['MW_pf'].sum()
+    logger.info(f'Se importaron: {despacho_importado_pf:.2f} [MW].')
     print('-'*80)
     return pareo_sta
 
@@ -419,6 +424,8 @@ def importar_gen_sincrona(pareo_syn, gsyn_pf, escenario, df_desp_TH):
     df_despacho = df_despacho.loc[[escenario]]
     central_slack = df_despacho.idxmax(axis = 1).iloc[0]
     logger.info('Se filtraron los despachos de centrales sincronas (SDDP) segun el escenario.')
+    desp_syb_total_sddp = df_despacho.sum(axis = 1).values[0]
+    logger.info(f'La generacion variable para este escenario es de: {desp_syb_total_sddp:.2f} [MW]')
     while True:
         # PAREAMOS EN BASE AL ARCHIVO DE PAREO
         df_gen_syn_activa = pd.merge(df_gen_syn_activa, pareo_syn, on='PF', how='left')
@@ -433,6 +440,7 @@ def importar_gen_sincrona(pareo_syn, gsyn_pf, escenario, df_desp_TH):
         df_general = pd.concat(lista_dfs_despachos, ignore_index= True)
         df_general.drop(columns = ['SDDP', 'P_min_MW', 'P_max_MW'], inplace = True)
         pareo_gen_syn = pd.merge(df_gen_syn_activa, df_general, on = 'PF', how = 'left')
+        pareo_gen_syn = pareo_gen_syn[['PF', 'SDDP', 'P_max_MW', 'P_min_MW', 'Desp']].copy()
         # IDENTIFICAMOS GENERADORES QUE NO SE LES ASIGNO UN DESPACHO PERO QUE ESTEN ACTIVAS EN PF
         hay_nulos = pareo_gen_syn['Desp'].isna().any()
         if hay_nulos:
@@ -486,6 +494,8 @@ def importar_gen_sincrona(pareo_syn, gsyn_pf, escenario, df_desp_TH):
     logger.info('Se cargo exitosamente los despachos sincronos SDDP a las unidades sincronas en PF.')
     logger.info(f'Se asigno tension inicial de {U_INICIAL} [p.u] a todas las uniudades sincronas que no son referencia.')
     logger.info(f'Se asigno tension inicial de 1.0 [p.u] y angulo de 0° a la unidad de referencia.')
+    despacho_importado_pf = pareo_gen_syn['Desp'].sum()
+    logger.info(f'Se importaron: {despacho_importado_pf:.2f} [MW].')
     print('-'*80)
     return pareo_syn
 
