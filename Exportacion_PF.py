@@ -177,7 +177,7 @@ def elementos_pf(app, ruta, net):
     ws1 = guardar_valores(ws1, nombres_gen_syn, gen_syn_sddp, variacion_syn)
     ws2 = wb.create_sheet('Gen. Sta.', 1)
     ws2 = guardar_valores(ws2, nombres_gen_sta, gen_sta_sddp, variacion_sta)
-    ws3 = wb.create_sheet('Cargas.', 2)
+    ws3 = wb.create_sheet('Cargas', 2)
     ws3 = guardar_valores(ws3, nombre_cargas_pf, load_sddp, variacion_lod)
     if 'Sheet' in wb.sheetnames:
         wb.remove(wb['Sheet'])
