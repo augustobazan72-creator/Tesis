@@ -268,7 +268,7 @@ def pedir_contingencias_graficador(net):
         if entrada_cont.strip() == '':
             return elementos_red
         contingencias = [c.strip().upper() for c in entrada_cont.split(',') if c.strip()]
-        contingencias = list(set(contingencias))
+        contingencias = set(contingencias)
         cotingencias_validas = contingencias.issubset(elementos_red)
         if cotingencias_validas:
             logger.info(f'Se validaron las contingencias: {contingencias}')
@@ -306,10 +306,11 @@ def menu_digsilent():
     print(f'{'='*80}')
     print('[1] Cargar escenarios (criticos o escenario especifico).')
     print('[2] Generar el reporte de elementos de la red.')
+    print('[3] Generar reporte de despacho, demanda y topologia por escenario.')
     print('[q] Salir.')
     while True:
         print(f'{'-'*80}')
-        opcion = input_log("Seleccione (1/2/q): ").strip().lower()
+        opcion = input_log("Seleccione (1/2/3/q): ").strip().lower()
         if opcion in ['1', '2', '3', 'q']:
             print('='*80)
             return opcion

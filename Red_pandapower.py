@@ -660,3 +660,99 @@ def lista_paralelo(net):
     else:
         logger.info(f'Se  identificaron {len(lista_paralelo)} lineas doble terna,\n{lista_paralelo}.')
     return lista_paralelo
+
+def identificar_escenarios(demanda, despacho, topologia, ruta_output):
+    # Leemos los dfs
+    despachos = despacho.copy()
+    demandas = demanda.copy()
+    topologia = topologia.copy()
+
+    # Seteamos indices
+    indices =['Etapa', 'Serie', 'Bloque']
+    despachos.set_index(keys = indices, inplace=True)
+    demandas.set_index(keys = indices, inplace=True)
+    topologia.set_index(keys = indices, inplace=True)
+
+    def despachos_escenario(df, escenario, ruta):
+        etapa, serie, bloque = escenario
+        # DESPACHOS
+        lista_gen = set(df['Nombre_Generador'].tolist())
+        gen_desconectados = []
+        gen_despachados = []
+        for x in list(lista_gen):
+            dff = df.loc[escenario].copy()
+            despacho = dff.loc[dff['Nombre_Generador'] == x, 'Despacho_MW'].values[0]
+            status = dff.loc[dff['Nombre_Generador'] == x, 'In_Service'].values[0]
+            if despacho == 0:
+                gen_desconectados.append((x, status))
+            else:
+                gen_despachados.append((x, despacho, status))
+        en_servicio = pd.DataFrame(gen_despachados)
+        en_servicio.columns = ['Gen', 'Desp_MW', 'Status']
+        fuera_servicio = pd.DataFrame(gen_desconectados)
+        fuera_servicio.columns = ['Gen', 'Status']
+        salida = Path(ruta)/f'Gen_syn_{etapa}_{serie}_{bloque}.xlsx'
+        with pd.ExcelWriter(salida, engine= 'openpyxl') as writer:
+            fuera_servicio.to_excel(writer, sheet_name='Gen_off', index=False)
+            en_servicio.to_excel(writer, sheet_name='Gen_on', index=False)
+        logger.info(f'Se genero el excel de los generadores.')
+
+    def demandas_escenario(df, escenario, ruta):
+        etapa, serie, bloque = escenario
+        lista = set(df['Nombre_Carga'].tolist())
+        cargas_apagadas, cargas_encendidas = [], []
+        for x in list(lista):
+            dff = df.loc[escenario].copy()
+            valor = dff.loc[dff['Nombre_Carga'] == x, 'Demanda_MW'].values[0]
+            status = dff.loc[dff['Nombre_Carga'] == x, 'In_Service'].values[0]
+            if valor == 0:
+                cargas_apagadas.append((x, status))
+            else:
+                cargas_encendidas.append((x, valor, status))
+        en_servicio = pd.DataFrame(cargas_encendidas)
+        en_servicio.columns = ['Carga', 'Dem_MW', 'Status']
+        fuera_servicio = pd.DataFrame(cargas_apagadas)
+        fuera_servicio.columns = ['Carga', 'Status']
+        salida = Path(ruta)/f'Dem_{etapa}_{serie}_{bloque}.xlsx'
+        with pd.ExcelWriter(salida, engine= 'openpyxl') as writer:
+            fuera_servicio.to_excel(writer, sheet_name='Dem_off', index=False)
+            en_servicio.to_excel(writer, sheet_name='Dem_on', index=False)
+        logger.info(f'Se genero el excel de la demanda.')
+
+    def topologia_escenario(df, escenario, ruta):
+        etapa, serie, bloque = escenario
+        lista = set(df['Nombre'].tolist())
+        topologia_apagada, topologia_encendida = [], []
+        for x in list(lista):
+            dff = df.loc[escenario].copy()
+            status = dff.loc[dff['Nombre'] == x, 'In_Service'].values[0]
+            if status == False:
+                topologia_apagada.append((x, status))
+            else:
+                topologia_encendida.append((x, status))
+        en_servicio = pd.DataFrame(topologia_encendida)
+        en_servicio.columns = ['Componente', 'Status']
+        fuera_servicio = pd.DataFrame(topologia_apagada)
+        fuera_servicio.columns = ['Componente', 'Status']
+        salida = Path(ruta)/f'Top_{etapa}_{serie}_{bloque}.xlsx'
+        with pd.ExcelWriter(salida, engine= 'openpyxl') as writer:
+            fuera_servicio.to_excel(writer, sheet_name='Top_off', index=False)
+            en_servicio.to_excel(writer, sheet_name='Top_on', index=False)
+        logger.info(f'Se genero el excel de la Topologia')
+
+    # Bucle de lectura
+    while True:
+        print('-'*80)
+        escenario = input('Ingrese el escenario (Etapa, Serie, Bloque) o "q" para salir:').strip()
+        if escenario.lower() == "q":
+            print('='*80)
+            break
+        etapa, serie, bloque = escenario.split(',')
+        etapa = int(etapa.strip())
+        serie = int(serie.strip())
+        bloque = int(bloque.strip())
+        escenario = (etapa, serie, bloque)
+        # PROCESO
+        despachos_escenario(despachos, escenario, ruta_output)
+        demandas_escenario(demandas, escenario, ruta_output)
+        topologia_escenario(topologia, escenario, ruta_output)

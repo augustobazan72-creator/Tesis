@@ -337,6 +337,51 @@ def lectura_escenarios(ruta_escenarios):
     print(f'{'='*80}')
     return df_p1, df_p2
 
+def lectura_reportes(ruta_escenarios, nombre_bd):
+    print(f'{'='*80}')
+    print(f'LECTURA DE REPORTES')
+    print(f'{'='*80}')
+
+    ruta = ruta_escenarios.parent.parent/f'Op1_{nombre_bd}_(D.Completo)'/'3. Reportes'
+    # RUTAS DE CARPETA DE ESCENARIOS
+    demanda = Path(ruta)/'Demanda_por_Escenario.csv'
+    despacho = Path(ruta)/'Despacho_por_Escenario.csv'
+    topologia = Path(ruta)/'Topologia_por_Escenario.csv'
+
+    # REPORTE 1
+    try:
+        df_p1 = pd.read_csv(demanda, encoding = 'utf-8')
+        logger.info('Se leyo correctamente el archivo "Demanda_por_Escenario.csv".')
+    except:
+        logger.warning('No se leyo correctamente el archivo "Demanda_por_Escenario.csv".')
+        logger.info('Revise que se haya ingresado una carpeta con el analisis de escenarios criticos ' + 
+                    'realizado correctamente.')
+        df_p1 = pd.DataFrame()
+    
+    # REPORTE 2
+    try:
+        df_p2 = pd.read_csv(despacho, encoding = 'utf-8')
+        logger.info('Se leyo correctamente el archivo "Despacho_por_Escenario.csv".')
+    except:
+        logger.warning('No se leyo correctamente el archivo "Despacho_por_Escenario.csv".')
+        logger.info('Revise que se haya ingresado una carpeta con el analisis de escenarios criticos' + 
+                    'realizado correctamente.')
+        df_p2 = pd.DataFrame()
+    
+    # REPORTE 3
+    try:
+        df_p3 = pd.read_csv(topologia, encoding = 'utf-8')
+        logger.info('Se leyo correctamente el archivo "Topologia_por_Escenario.csv".')
+    except:
+        logger.warning('No se leyo correctamente el archivo "Topologia_por_Escenario.csv".')
+        logger.info('Revise que se haya ingresado una carpeta con el analisis de escenarios criticos' + 
+                    'realizado correctamente.')
+        df_p3 = pd.DataFrame()
+    print(f'{'='*80}')
+    return df_p1, df_p2, df_p3
+
+
+
 def lector_pareo():
     while True:
         ruta = input_log('Ingrese la ruta del archivo ".xlsx" que continen el pareo (PF-SDDP):\n')

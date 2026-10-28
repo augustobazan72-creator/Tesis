@@ -300,10 +300,13 @@ def carpetas_OP4(ruta_carpeta_base: str | Path, nombre_bd : str):
     ruta_base = ruta_carpeta_base / f"Op4_{nombre_bd}_(DigSilent)"
     rta_par = ruta_base / "1. Informacion_Pareo"    
     rta_ac = ruta_base / "2. Analisis_AC"
+    rta_esc = ruta_base / "3. Reporte_por_escenario"
+
     subcarpetas = [
         rta_par,
         rta_ac,
+        rta_esc
     ]
     for sub in subcarpetas:
         sub.mkdir(parents=True, exist_ok=True)
-    return (rta_par, rta_ac)
+    return (rta_par, rta_ac, rta_esc)

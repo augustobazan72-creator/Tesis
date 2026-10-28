@@ -5,6 +5,8 @@ import openpyxl
 import pandas as pd
 from pathlib import Path
 from Configuracion_inicial import input_log
+from Red_pandapower import identificar_escenarios
+from Lector_excels import lectura_reportes
 from Menus import menu_digsilent, menu_escenarios, guia__archivo_pareo
 from Lector_excels import lector_pareo
 
@@ -563,8 +565,8 @@ def importar_escenarios(pareo_syn, pareo_sta, pareo_cargas, df_p1, df_p2, app, d
     else:
         return True, pareo_cargas
 
-def menu_vinculacion_pf(df_p1, df_p2, rta_par, rta_ac, net, df_demanda, df_desp_TH, df_desp_ren, Slacks,
-                        configuracion_estudio_7):
+def menu_vinculacion_pf(df_p1, df_p2, rta_par, rta_esc, net, df_demanda, df_desp_TH, df_desp_ren, Slacks,
+                        configuracion_estudio_7, ruta_escenarios, nombre_bd):
     # VINCULAMOS CON PF
     app = vinculacion_pf(configuracion_estudio_7)
     dir_proyecto = adquisicion_bd_pf(app)
@@ -588,7 +590,13 @@ def menu_vinculacion_pf(df_p1, df_p2, rta_par, rta_ac, net, df_demanda, df_desp_
                         if salir:
                             break
                 break
+        
         elif opcion =='2':
             elementos_pf(app, rta_par, net)
+
+        elif opcion =='3':
+            demanda, despacho, topologia = lectura_reportes(ruta_escenarios, nombre_bd)
+            identificar_escenarios(demanda, despacho, topologia, rta_esc)
+        
         else:
             return

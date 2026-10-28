@@ -330,9 +330,9 @@ def opcion_DC_4(ruta_estudio, ruta_escenarios, nombre_bd, ruta_carpeta_base, net
         e = 'Existe uno o ambos dataframe de escenario(s) vacio(s), por lo que no se mostraran los escenarios criticos'
         logger.warning(e)
     # FUNCION
-    rta_par, rta_ac = carpetas_OP4(ruta_estudio, nombre_bd)
-    menu_vinculacion_pf(df_p1, df_p2, rta_par, rta_ac, net, df_demanda, df_desp_TH, df_desp_ren,
-                        Slacks, configuracion_estudio_4)
+    rta_par, rta_ac, rta_esc = carpetas_OP4(ruta_estudio, nombre_bd)
+    menu_vinculacion_pf(df_p1, df_p2, rta_par, rta_esc, net, df_demanda, df_desp_TH, df_desp_ren,
+                        Slacks, configuracion_estudio_4, ruta_escenarios, nombre_bd)
 
 def opcion_DC_6(nombre_bd, ruta_carpeta_base, net, df_mline, df_mtrafo, df_demanda, df_desp_TH,df_desp_ren, Slacks,
             datos_estudio, df_fechas, df_duraci):
