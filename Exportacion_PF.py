@@ -273,7 +273,7 @@ def importar_demanda(escenario, pareo_cargas, df_demanda, cargas_pf):
             demanda_sddp = float(df_cargas[carga].item())
             df = df_cargas_activas[df_cargas_activas['SDDP'] == carga].copy()
             numero_cargas = len(df['PF'].tolist())
-            df['P_asig'] = demanda_sddp /(1 * numero_cargas)  #! Verificar factores de sensibilidad si es que influyen
+            df['P_asig'] = demanda_sddp /(1 * numero_cargas)
             df = df[['PF', 'P_asig']].copy()
             demandas_pf.append(df)
         df_demandas_pf = pd.concat(demandas_pf, ignore_index= True)

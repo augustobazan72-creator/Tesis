@@ -21,22 +21,6 @@ def menu_principal():
     print("8. Salir")
     print(f'{'-'*80}')
 
-def estudio_previo_OP2()-> bool:
-    while True:
-        print(f'{'='*80}')
-        opcion = input_log('Se realizo algun estudio previo (Diagnostico de la red de transmision)? (S/N):').strip().lower()
-        if opcion == 's':
-            logger.info('No se relizara el diagnostico de la red de transmision.')
-            logger.info('Se tomara como base comparativa los resultados obtenidos previamente.')
-            print(f'{'='*80}')
-            return False
-        elif opcion == 'n':
-            logger.info('Se relizara el diagnostico de la red de transmision.')
-            print(f'{'='*80}')
-            return True
-        else:
-            logger.warning('Ingrese una opcion valida [S-N].')
-
 def prints_refuerzos_usuario(ruta_diagnostico):
     print(f'{'='*80}')
     print('CONFIGURACION DEL ARCHIVO DE REFUERZOS .')
@@ -46,7 +30,7 @@ def prints_refuerzos_usuario(ruta_diagnostico):
     ('\n    x[ohm/km] | length_km | Elementos a monitorear | En servicio | Latitud | Longitud'))
     logger.info(('En caso de desconocer "id_bus_from" o "id_bus_to" el programa automaticamente saco un reporte de la topologia')+
     (f'\n    de la red guardada en:\n    {ruta_diagnostico}/3. Reportes'))
-    logger.info(('En caso de desconexion de un componente se usa "0" en la columna de "En servicio", se deja vacia en caso de que')+
+    logger.info(('En caso de desconexion de un componente se usa "1" en la columna de "En servicio", se deja vacia en caso de que')+
     ('\n    sea una conexion.'))
     print(f'{'-'*80}') 
     print('Nombre_refuerzo.\n')
@@ -58,7 +42,7 @@ def prints_refuerzos_usuario(ruta_diagnostico):
     ('\n    servicio las demas columnas se deben dejar vacias (la unica que se llena es en servicio).'))
     logger.info(('El nombre en caso de ser una barra debe ser AAA-000, donde "AAA" (identificador de la barra) y')+
     ('\n    "000" (tension de la barra).'))
-    print(f'{'-'*80}') 
+    print(f'{'-'*80}')
     print('Configuracion para "Cartera" y "Alternativas".\n')
     logger.info('Cada "Cartera" esta constiuida por "Alternativas" donde el programa elige la alternativa de menor costo.') 
     logger.info(('Para evaluar varios refuerzos como una sola alternativa, la columna de alternativa debe ser la misma para todos') +

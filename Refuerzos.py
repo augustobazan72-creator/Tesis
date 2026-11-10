@@ -80,7 +80,7 @@ def elementos_criticos (net, analisis_componentes, ranking_contingencias_cb):
     df_criticos = analisis_componentes.copy()
     df_criticos = df_criticos[df_criticos['P_1%']>=100].copy()
     logger.info('Se filtraran los elementos criticos con "P_1%" > 100%.')
-    if len(df_criticos['Nombre_Componente']) < 5:
+    if len(df_criticos['Nombre_Componente']) < 0:
         logger.info('No se encontraron los suficentes elementos por lo que se usara "P_1%" > 90%')
         df_criticos = df_criticos[df_criticos['P_1%']>=90].copy()
         componentes_criticos = set(df_criticos['Nombre_Componente'].tolist())
@@ -664,7 +664,7 @@ def fecha_ingreso(df_cargabilidades_rbase, elemento_monitoreo, df_fechas, dias_e
     print(f'{'='*80}')
     # DF_FECHAS
     df_fechas = df_fechas.copy()
-    df_fechas.set_index('Etapa')
+    df_fechas.set_index('Etapa', inplace  =  True)
     fecha_minima = fecha_restriccion(df_fechas, dias_etapa)
     # PRIMERA FECHA CONDICION N
     df = df_cargabilidades_rbase[df_cargabilidades_rbase['Componente']==elemento_monitoreo].copy()
