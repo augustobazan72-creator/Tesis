@@ -234,7 +234,7 @@ def analisis_caso_base(df_cargabilidades : pd.DataFrame, df_flujos : pd.DataFram
     print(f"{'='*80}")
     print('Iniciando Analisis Estadistico de cargabilidades del caso base.')
     print(f"{'='*80}")
-    logger.info('Filtrando elementos con una cargabilidad menor al 90%.')
+    logger.info(f'Filtrando elementos con una cargabilidad menor a {LIMITE_CARGABILIDAD} [%].')
     # Elementos con cargabilidad >= 90% 
     df_filtrado = (
         df_cargabilidades[df_cargabilidades['loading_percent'] >= LIMITE_CARGABILIDAD]

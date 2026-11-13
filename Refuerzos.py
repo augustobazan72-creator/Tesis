@@ -272,9 +272,9 @@ def analisis_ref_popuestos(net, analisis_componentes: pd.DataFrame, ranking_cont
 
     # PREPARACION PRE ESTUDIO
     datos_refuerzos = elementos_criticos(net, analisis_componentes, ranking_contingencias_cb)
-    df_cargabilidades_base = unir_duracion(df_duraci, df_cargabilidades_base)
+    df_cargabilidades_base_horas = unir_duracion(df_duraci, df_cargabilidades_base)
     horas_serie = constantes(df_duraci, datos_estudio['numero_etapas'])
-    indice_red_base = indice_cond_n(df_cargabilidades_base, df_duraci, exponente_n_pip, horas_serie)
+    indice_red_base = indice_cond_n(df_cargabilidades_base_horas, df_duraci, exponente_n_pip, horas_serie)
     
     # RESULTADOS DEL ANALISIS POR PROPUESTA
     analisis_resultados = [[*indice_red_base, 'Red base']]
@@ -314,7 +314,7 @@ def analisis_ref_popuestos(net, analisis_componentes: pd.DataFrame, ranking_cont
                                                 nombre)
         lista_monitoreados.append(nombre[:-2])
         lista_monitoreados = list(set(lista_monitoreados))
-        df_comparativa, fila_res  = comparativa_cn(df_cargabilidades_base, df_cargabilidades_ref, datos_estudio,
+        df_comparativa, fila_res  = comparativa_cn(df_cargabilidades_base_horas, df_cargabilidades_ref, datos_estudio,
                                 nombre, horas_serie, lista_monitoreados, rta_cb_r, 1)
         comportamiento_cn.append(fila_res)
         grafica_comparativa_cb(df_comparativa, nombre, rta_cb_r)
@@ -618,7 +618,8 @@ def elementos_monitoreo_alternativas(df_cargabilidades_base: pd.DataFrame, df_ca
         logger.info(f'Los {n_elementos} elementos de monitoreo mas la lista de elementos de monitoreo decalarados en'+
                     f'\nexcel para {nombre} son:\n{elementos_sensibles}')
         elementos_sensibles.extend(lista_monitoreo)
-        return list(set(elementos_sensibles))
+        elementos_sensibles = list(dict.fromkeys(elementos_sensibles))
+        return elementos_sensibles
     logger.info(f'Los {n_elementos} elementos de monitoreo para {nombre} son:\n{elementos_sensibles}')
     elementos_sensibles.extend(lista_monitoreo)
     return elementos_sensibles
@@ -642,21 +643,13 @@ def reporte_tecnico_alternativa(df_comparativa, ranking_contingencias_rb, indice
     print(f'{'-'*80}')
     return df_comparativa
 
-def fecha_restriccion(df_fechas, dias_etapa):
-    if dias_etapa ==7:
-        etapa_restriccion = 109
-    elif dias_etapa ==30:
-        etapa_restriccion = 25
+def fecha_restriccion(dias_etapa):
+    if dias_etapa == 7:
+        return 103
+    elif dias_etapa == 30:
+        return 25
     else:
-        etapa_restriccion = 9
-    try:
-        fecha_restriccion = df_fechas.loc[etapa_restriccion, 'Fecha']
-    except:
-        dias_sum = etapa_restriccion * dias_etapa
-        f_inicio = df_fechas.loc[1, 'Fecha']
-        fecha_restriccion = f_inicio + timedelta(days = dias_sum)
-    finally:
-        return fecha_restriccion
+        return 9
 
 def fecha_ingreso(df_cargabilidades_rbase, elemento_monitoreo, df_fechas, dias_etapa, ruta_pips_rb):
     print(f'{'='*80}')
@@ -665,9 +658,10 @@ def fecha_ingreso(df_cargabilidades_rbase, elemento_monitoreo, df_fechas, dias_e
     # DF_FECHAS
     df_fechas = df_fechas.copy()
     df_fechas.set_index('Etapa', inplace  =  True)
-    fecha_minima = fecha_restriccion(df_fechas, dias_etapa)
+    etapa_restriccion = fecha_restriccion(dias_etapa)
     # PRIMERA FECHA CONDICION N
     df = df_cargabilidades_rbase[df_cargabilidades_rbase['Componente']==elemento_monitoreo].copy()
+    df = df[df['Etapa'] > etapa_restriccion].copy()
     df_pivot = df.pivot_table(index=['Etapa', 'Bloque'], columns = 'Serie', values = 'loading_percent')
     df_pivot['Cargab_prom'] = df_pivot.mean(axis=1)
     sobrecarga = df_pivot['Cargab_prom'] >= 100
@@ -675,15 +669,14 @@ def fecha_ingreso(df_cargabilidades_rbase, elemento_monitoreo, df_fechas, dias_e
         indice = sobrecarga.idxmax()
         etapa = indice[0]
         fecha_1 = df_fechas.loc[etapa, 'Fecha']
-        if fecha_1 < fecha_minima:
-            fecha_1 = fecha_minima
         logger.info('Se identifico la primera fecha de ingreso posible.')
     else:
         logger.info('No se identifico una primera fecha de ingreso posible.')
-        logger.info('Por lo que se usara la restriccion de 2 años')
-        fecha_1 = fecha_minima
+        logger.info('Por lo que el proyecto en condicion normal no se requiere')
+        fecha_1 = np.nan
     # SEGUNDA FECHA CONDICION N-1 (CONTINGENCIAS)
     df_pip = pd.read_csv(Path(ruta_pips_rb)/f'PIP_{elemento_monitoreo}.csv')
+    df_pip = df_pip[df_pip['Etapa'] > etapa_restriccion].copy()
     df_pivot = df_pip.pivot_table(index=['Etapa', 'Bloque'], columns = 'Serie', values = 'PIp_Total')
     df_pivot['PIP_prom'] = df_pivot.mean(axis=1)
     sobrecarga = df_pivot['PIP_prom'] >= 1.1
@@ -691,13 +684,11 @@ def fecha_ingreso(df_cargabilidades_rbase, elemento_monitoreo, df_fechas, dias_e
         indice = sobrecarga.idxmax()
         etapa = indice[0]
         fecha_2 = df_fechas.loc[etapa, 'Fecha']
-        if fecha_2 < fecha_minima:
-            fecha_2 = fecha_minima
         logger.info('Se identifico la segunda fecha de ingreso posible.')
     else:
         logger.info('No se identifico una segunda fecha de ingreso posible.')
-        logger.info('Por lo que se usara la restriccion de 2 años')
-        fecha_2 = fecha_minima
+        logger.info('Por lo que el proyecto en condicion de contingencias no se requiere.')
+        fecha_2 = np.nan
     print(f'{'='*80}')
     return fecha_1, fecha_2
 
@@ -867,9 +858,9 @@ def refuerzos_usuario(net, df_refuerzos, df_cargabilidades_rbase, ranking_contin
                 df_desp_ren, Slacks, datos_estudio, df_fechas, df_duraci, config_red, df_costos_ind, df_costos_reactores, nucleos):
     
     # PREPARACION PRE ESTUDIO
-    df_cargabilidades_base = unir_duracion(df_duraci, df_cargabilidades_rbase)
+    df_cargabilidades_base_horas = unir_duracion(df_duraci, df_cargabilidades_rbase)
     horas_serie = constantes(df_duraci, datos_estudio['numero_etapas'])
-    indince_red_base, _ = indice_cond_n(df_cargabilidades_base, df_duraci, exponente_n_pip, horas_serie)
+    indince_red_base, _ = indice_cond_n(df_cargabilidades_base_horas, df_duraci, exponente_n_pip, horas_serie)
     
     # CARTERA DE PROYECTOS ---
     cartera= set(df_refuerzos['Cartera'].tolist())
@@ -956,12 +947,12 @@ def refuerzos_usuario(net, df_refuerzos, df_cargabilidades_rbase, ranking_contin
                         nucleos, trafos_limpios)
             del df_flujos_ref, analisis_componentes_ref
             df_cargabilidades_ref = unir_duracion(df_duraci, df_cargabilidades_ref)
-            lista_sensibles = elementos_monitoreo_alternativas(df_cargabilidades_base, df_cargabilidades_ref,
+            lista_sensibles = elementos_monitoreo_alternativas(df_cargabilidades_rbase, df_cargabilidades_ref,
                         n_elementos, nombre_propuesta, lista_monitoreo)
             lista_sensibles = list(set(lista_sensibles + lista_monitoreo))
             
             #COMPARATIVA
-            df_comparativa  = comparativa_cn(df_cargabilidades_base, df_cargabilidades_ref, datos_estudio,
+            df_comparativa  = comparativa_cn(df_cargabilidades_base_horas, df_cargabilidades_ref, datos_estudio,
                                 nombre_propuesta, horas_serie, lista_sensibles, ruta_caso_base, 2)
             grafica_comparativa_cb(df_comparativa, nombre_propuesta, ruta_caso_base)
             indice_ref, _ = indice_cond_n(df_cargabilidades_ref, df_duraci, exponente_n_pip, horas_serie)
